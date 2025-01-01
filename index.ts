@@ -1,12 +1,12 @@
 import * as express from 'express';
 import * as cors from 'cors';
 import * as dotenv from 'dotenv';
+import cookieParser = require('cookie-parser');
+import bodyParser = require('body-parser');
 import { connectdb } from './db/connection';
 import userroutes from './routes/user.routes';
 import hotelroutes from './routes/hotel.routes';
 import hotelRooms from './routes/room.routes';
-import cookieParser = require('cookie-parser');
-import bodyParser = require('body-parser');
 
 
 
@@ -28,8 +28,6 @@ app.use('/api/v1/user', userroutes);  // user routes
 app.use('/api/v1/hotel', hotelroutes); // hotel routes
 app.use('/api/v1/hotel-room', hotelRooms); // hotel routes
 
-
-console.log('Server ready1s');
 
 // start the server
 app.listen(PORT, async () => {
