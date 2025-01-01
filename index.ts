@@ -29,7 +29,7 @@ app.use('/api/v1/hotel', hotelroutes); // hotel routes
 app.use('/api/v1/hotel-room', hotelRooms); // hotel routes
 
 
-console.log('Server ready');
+console.log('Server ready1s');
 
 // start the server
 app.listen(PORT, async () => {
