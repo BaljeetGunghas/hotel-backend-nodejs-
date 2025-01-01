@@ -16,7 +16,7 @@ export const getAllRooms = async (req: Request, res: Response) => {
     } catch (error) {
         return res.status(500).json({
             output: 0,
-            message: error.message,
+            message: (error as Error).message,
             jsonResponse: null,
         });
     }
@@ -58,7 +58,7 @@ export const getSpacificRoombyRoomId = async (req: Request, res: Response) => {
     } catch (error) {
         return res.status(500).json({
             output: 0,
-            message: error.message,
+            message: (error as Error).message,
             jsonResponse: null,
         });
     }
@@ -138,7 +138,7 @@ export const createRoom = async (req: Request, res: Response) => {
     } catch (error) {
         return res.status(500).json({
             output: 0,
-            message: error.message,
+            message: (error as Error).message,
             jsonResponse: null,
         });
     }
@@ -206,7 +206,7 @@ export const updateRoom = async (req: Request, res: Response) => {
     } catch (error) {
         return res.status(500).json({
             output: 0,
-            message: error.message,
+            message: (error as Error).message,
             jsonResponse: null,
         });
     }
@@ -232,7 +232,7 @@ export const getRoomsByHotel = async (req: Request, res: Response) => {
     } catch (error) {
         return res.status(500).json({
             output: 0,
-            message: error.message,
+            message: (error as Error).message,
             jsonResponse: null,
         });
     }
@@ -265,7 +265,7 @@ export const deleteRoom = async (req: Request, res: Response) => {
     } catch (error) {
         return res.status(500).json({
             output: 0,
-            message: error.message,
+            message: (error as Error).message,
             jsonResponse: null,
         });
     }
@@ -293,12 +293,20 @@ export const addRoomReview = async (req: Request, res: Response) => {
 
         // update review count and rating in Room model
         const room = await Room.findById({ _id: roomId });
-        room.reviews.push(review._id as any);
+        if (room) {
+            room.reviews.push(review._id as any);
 
-        const totalRating = ((+room.rating || 0) * (room.reviews.length - 1) + Number(rating)) / room.reviews.length;
+            const totalRating = ((room.rating ? +room.rating : 0) * (room.reviews.length - 1) + Number(rating)) / room.reviews.length;
 
-        room.rating = +totalRating.toFixed(1);
-        await room.save();
+            room.rating = +totalRating.toFixed(1);
+            await room.save();
+        } else {
+            return res.status(404).json({
+                output: 0,
+                message: "Room not found",
+                jsonResponse: null,
+            });
+        }
 
         return res.status(200).json({
             output: 1,
@@ -308,7 +316,7 @@ export const addRoomReview = async (req: Request, res: Response) => {
     } catch (error) {
         return res.status(500).json({
             output: 0,
-            message: error.message,
+            message: (error as Error).message,
             jsonResponse: null,
         });
     }

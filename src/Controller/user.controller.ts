@@ -208,7 +208,7 @@ export const resetEmailVerificationToken = async (req: Request, res: Response) =
         user.verificationToken = verificationToken;
         user.verificationTokenExpires = new Date(Date.now() + 1 * 60 * 60 * 1000);
         await user.save();
-        
+
         // send email verification email
         // await sendVerificationEmail(user.email, user.name, user.verificationToken);
         return res.status(200).json({
@@ -234,24 +234,29 @@ export const resetPassword = async (req: Request, res: Response) => {
         if (!user) {
             return res.status(400).json({ message: "Invalid token" });
         }
-        const resetTokenExpireAt = new Date(user.resetPasswordExpires);
-        if (resetTokenExpireAt < new Date()) {
-            return res.status(400).json({ message: "Token has expired" });
+        if (user.resetPasswordExpires) {
+
+            const resetTokenExpireAt = new Date(user.resetPasswordExpires);
+            if (resetTokenExpireAt < new Date()) {
+                return res.status(400).json({ message: "Token has expired" });
+            }
+            const hashedPassword = await bcrypt.hash(password, 10);
+            user.password = hashedPassword;
+            user.resetPasswordToken = null;
+            user.resetPasswordExpires = null;
+            await user.save();
+            //send success reset email
+            // await passwordResetConfirmationEmail(user.email);
+
+            return res.status(200).json({
+                output: 1,
+                message: "Password reset successfully",
+                jsonResponse: null,
+            });
+
+        } else {
+            return res.status(400).json({ message: "Invalid token" });
         }
-        const hashedPassword = await bcrypt.hash(password, 10);
-        user.password = hashedPassword;
-        user.resetPasswordToken = null;
-        user.resetPasswordExpires = null;
-        await user.save();
-
-        //send success reset email
-        // await passwordResetConfirmationEmail(user.email);
-
-        return res.status(200).json({
-            output: 1,
-            message: "Password reset successfully",
-            jsonResponse: null,
-        });
     } catch (error) {
         console.log(error);
         return res.status(500).json({ message: "Failed to reset password" });
