@@ -29,9 +29,10 @@ app.use('/api/v1/hotel', hotelroutes); // hotel routes
 app.use('/api/v1/hotel-room', hotelRooms); // hotel routes
 
 
+console.log('Server ready');
 
 // start the server
-app.listen(PORT, () => {
-  connectdb();
+app.listen(PORT, async () => {
+  await connectdb();
   console.log(`Server is running on http://localhost:${PORT}`);
 });
