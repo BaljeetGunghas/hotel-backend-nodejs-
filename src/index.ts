@@ -1,6 +1,6 @@
-import * as express from 'express';
-import * as cors from 'cors';
-import * as dotenv from 'dotenv';
+import express from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
 import cookieParser = require('cookie-parser');
 import bodyParser = require('body-parser');
 import { connectdb } from './db/connection';

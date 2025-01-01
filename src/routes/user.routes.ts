@@ -1,4 +1,4 @@
-import { isAutheticated } from './../middlewares/isAuthenticated';
+import { isAutheticated } from '../middlewares/isAuthenticated';
 import * as ex from "express";
 import { Request, Response } from "express";
 

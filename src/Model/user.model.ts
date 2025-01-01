@@ -12,12 +12,12 @@ export interface IUser {
     city: string;
     status: string;
     date_of_birth: Date;
-    isVerified?: boolean;
-    lastLogin?: Date;
-    resetPasswordToken?: string;
-    resetPasswordExpires?: Date;
-    verificationToken?: string;
-    verificationTokenExpires?: Date;
+    isVerified?: boolean | null;
+    lastLogin?: Date | null;
+    resetPasswordToken?: string | null;
+    resetPasswordExpires?: Date | null;
+    verificationToken?: string | null;
+    verificationTokenExpires?: Date | null;
 }
 
 export interface IUserDocument extends IUser, Document {
@@ -41,10 +41,10 @@ const userSchema = new mongoose.Schema<IUserDocument>({
     //advance 
     isVerified: { type: Boolean, default: false },  //email verification
     lastLogin: { type: Date, default: Date.now },      //last login
-    resetPasswordToken: { type: String },   //reset password token
-    resetPasswordExpires: { type: Date },   //reset password token expiry
-    verificationToken: { type: String },    //email verification token
-    verificationTokenExpires: { type: Date },   //email verification token expiry
+    resetPasswordToken: { type: String || null },   //reset password token
+    resetPasswordExpires: { type: Date || null },   //reset password token expiry
+    verificationToken: { type: String || null },    //email verification token
+    verificationTokenExpires: { type: Date || null },   //email verification token expiry
 }, { timestamps: true });
 
 export const User = mongoose.model('User', userSchema);

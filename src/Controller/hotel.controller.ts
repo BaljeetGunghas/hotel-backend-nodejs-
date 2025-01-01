@@ -17,7 +17,7 @@ export const getHotelsList = async (req: Request, res: Response) => {
     } catch (error) {
         res.status(500).json({
             output: 0,
-            message: error.message,
+            message: (error as Error).message,
         });
     }
 };
@@ -49,7 +49,7 @@ export const getspacificHotelbyHotelId = async (req: Request, res: Response) => 
     } catch (error) {
         return res.status(500).json({
             output: 0,
-            message: error.message,
+            message: (error as Error).message,
         });
     }
 }
@@ -106,7 +106,7 @@ export const getSpecificHotelDetailsByHotelId = async (req: Request, res: Respon
   } catch (error) {
     return res.status(500).json({
       output: 0,
-      message: error.message,
+      message: (error as Error).message,
     });
   }
 };
@@ -159,8 +159,11 @@ export const createHotel = async (req: Request, res: Response) => {
             json: hotel,
         });
     } catch (error) {
-        console.log(error.message);
-        res.status(500).json({ message: error.message });
+        res.status(500).json({
+            output: 0,
+            message: (error as Error).message,
+            jsonResponse: null
+        });
     }
 };
 
@@ -219,7 +222,7 @@ export const updatespacificHotelbyHotelId = async (req: Request, res: Response) 
         return res.status(500).json({
             output: 0,
             message: "An error occurred while updating the hotel.",
-            error: error.message, // Optionally include the error message
+            error: (error as Error).message, // Optionally include the error message
         });
     }
 }
@@ -254,7 +257,7 @@ export const deletespacificHotelbyHotelId = async (req: Request, res: Response) 
         return res.status(500).json({
             output: 0,
             message: "An error occurred while deleting the hotel.",
-            error: error.message, // Optionally include the error message
+            error: (error as Error).message, // Optionally include the error message
         });
     }
 }
@@ -293,7 +296,7 @@ export const addhotelReview = async (req: Request, res: Response) => {
         return res.status(500).json({
             output: 0,
             message: "An error occurred while adding the review.",
-            error: error.message, // Optionally include the error message
+            error: (error as Error).message, // Optionally include the error message
         });
     }
 }
