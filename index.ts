@@ -21,7 +21,9 @@ app.use(express.urlencoded({ extended: true }));
 
 // api routes
 
-
+app.get('/', (req, res) => {
+  res.send('App Started!');
+});
 app.use('/api/v1/user', userroutes);  // user routes
 app.use('/api/v1/hotel', hotelroutes); // hotel routes
 app.use('/api/v1/hotel-room', hotelRooms); // hotel routes
