@@ -85,7 +85,7 @@ export const login = async (req: Request, res: Response) => {
         }
         user.lastLogin = new Date();
         await user.save();
-        const UserWithoutPassword = await User.find(
+        const UserWithoutPassword = await User.findOne(
             { email: email },
             { password: 0, verificationToken: 0, verificationTokenExpires: 0, resetPasswordToken: 0, resetPasswordExpires: 0, __v: 0 }
         );
