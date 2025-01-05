@@ -12,7 +12,23 @@ import hotelRooms from './routes/room.routes';
 
 dotenv.config();
 const app = express();
-app.use(cors());
+const allowedOrigins = [
+  'https://velvet-haven.netlify.app/',
+  'http://localhost:3000', // Include localhost for development
+];
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
+    methods: ['GET', 'POST', 'PUT', 'DELETE'], // Allow these HTTP methods
+    credentials: true, // Allow cookies or Authorization headers
+  })
+);
 app.use(bodyParser.json({ limit: '10mb' }));
 const PORT = process.env.PORT || 3000;
 app.use(express.json());
