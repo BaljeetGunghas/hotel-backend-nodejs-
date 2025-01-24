@@ -43,9 +43,10 @@ export const signup = async (req: Request, res: Response) => {
             password: _,
             verificationToken: __,
             verificationTokenExpires: ___,
+            resetPasswordToken: ____,
+            resetPasswordExpires: _____,
             ...userWithoutSensitiveData
         } = user.toObject();
-
         return res
             .status(201)
             .cookie("token", token, {
@@ -56,7 +57,8 @@ export const signup = async (req: Request, res: Response) => {
             .json({
                 output: 1,
                 message: "User created successfully",
-                user: userWithoutSensitiveData,
+                jsonResponse: userWithoutSensitiveData,
+                token: token,
             });
     } catch (error) {
         console.error("Signup Error: ", error);
@@ -109,6 +111,32 @@ export const login = async (req: Request, res: Response) => {
         });
     }
 };
+
+
+export const isUserRegistered = async (req: Request, res: Response) => {
+    try {
+        const { email } = req.body;
+        const user = await User.findOne({ email });
+        if (user) {
+            return res.status(200).json({
+                output: 1,
+                message: "User already registered",
+                jsonResponse: null,
+            });
+        }
+        return res.status(200).json({
+            output: 0,
+            message: "User not registered",
+            jsonResponse: null,
+        });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({
+            message: "Failed to check user registration",
+        });
+    }
+}
+
 
 export const VerifyEmail = async (req: Request, res: Response) => {
     try {

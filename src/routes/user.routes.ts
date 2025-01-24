@@ -4,7 +4,7 @@ import { Request, Response } from "express";
 
 
 
-import { checkAuth, deleteUser, forgotPassword, login, logout, resetEmailVerificationToken, resetPassword, signup, updateProfile, VerifyEmail } from '../Controller/user.controller';
+import { checkAuth, deleteUser, forgotPassword, isUserRegistered, login, logout, resetEmailVerificationToken, resetPassword, signup, updateProfile, VerifyEmail } from '../Controller/user.controller';
 
 const router = ex.Router();
 
@@ -12,6 +12,7 @@ router.get("/check-auth", isAutheticated, async (req: Request, res: Response) =>
 
 router.post("/signup", async (req: Request, res: Response) => { await signup(req, res) });
 router.post("/login", async (req: Request, res: Response) => { await login(req, res) });
+router.post("/isUserRegistered", async (req: Request, res: Response) => { await isUserRegistered(req, res) });
 router.post("/logout", async (req: Request, res: Response) => { await logout(req, res) });
 
 router.post("/verfication-email-token-reset", async (req: Request, res: Response) => { await resetEmailVerificationToken(req, res) });
