@@ -13,21 +13,22 @@ dotenv.config({ path: evn });
 
 const app = express();
 const allowedOrigins = [
-  'https://velvet-haven.netlify.app/',
-  'http://localhost:3000', // Include localhost for development
+  'https://velvet-haven.netlify.app/', // production URL
+  /^http:\/\/localhost:\d+$/ // allow any localhost with dynamic ports
 ];
-
+app.options('*', cors());
 app.use(
   cors({
     origin: (origin, callback) => {
+      console.log('Origin:', origin);  // Log the origin for debugging
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
         callback(new Error('Not allowed by CORS'));
       }
     },
-    methods: ['GET', 'POST', 'PUT', 'DELETE'], // Allow these HTTP methodss
-    credentials: true, // Allow cookies or Authorization headers
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    credentials: true,
   })
 );
 
