@@ -1,15 +1,17 @@
 import { isAutheticated } from '../middlewares/isAuthenticated';
 import * as ex from "express";
 import { Request, Response } from "express";
+import express from 'express';
 
 
 
 import { checkAuth, deleteUser, forgotPassword, isUserRegistered, login, logout, resetEmailVerificationToken, resetPassword, signup, updateProfile, VerifyEmail } from '../Controller/user.controller';
 
 const router = ex.Router();
+const app = express();
 
 router.get("/check-auth", isAutheticated, async (req: Request, res: Response) => { await checkAuth(req, res) });
-router.get("/",(req: Request, res: Response) => { res.send("User Route") });
+app.get("/", (req: Request, res: Response) => { res.send("User Route") });
 router.post("/signup", async (req: Request, res: Response) => { await signup(req, res) });
 router.post("/login", async (req: Request, res: Response) => { await login(req, res) });
 router.post("/isUserRegistered", async (req: Request, res: Response) => { await isUserRegistered(req, res) });
