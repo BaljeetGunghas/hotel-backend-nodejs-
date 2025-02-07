@@ -13,25 +13,23 @@ dotenv.config({ path: evn });
 
 const app = express();
 const allowedOrigins = [
-  'https://velvet-haven.netlify.app', // production URL
-  /^http:\/\/localhost:\d+$/ // allow any localhost with dynamic ports
+  'https://velvet-haven.netlify.app', // ✅ Remove trailing slash
+  /^http:\/\/localhost:\d+$/ // ✅ Allow all localhost ports
 ];
-app.options('*', cors());
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      console.log('Request Origin:', origin || "Undefined (Same-origin or Postman)");
-
-      if (!origin || allowedOrigins.some((o) => (typeof o === "string" ? o === origin : o.test(origin)))) {
+      console.log('Origin:', origin); // ✅ Log for debugging
+      if (!origin || allowedOrigins.some((o) => o instanceof RegExp ? o.test(origin) : o === origin)) {
         callback(null, true);
       } else {
-        console.log("Blocked by CORS:", origin); // Debugging
+        console.error(`Blocked by CORS: ${origin}`);
         callback(new Error('Not allowed by CORS'));
       }
     },
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    credentials: true,
+    credentials: true, // ✅ Allow cookies/auth headers
   })
 );
 
