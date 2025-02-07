@@ -17,20 +17,24 @@ const allowedOrigins = [
   /^http:\/\/localhost:\d+$/ // allow any localhost with dynamic ports
 ];
 app.options('*', cors());
+
 app.use(
   cors({
     origin: (origin, callback) => {
-      console.log('Request Origin:', origin);  // Debugging log
+      console.log('Request Origin:', origin || "Undefined (Same-origin or Postman)");
+
       if (!origin || allowedOrigins.some((o) => (typeof o === "string" ? o === origin : o.test(origin)))) {
         callback(null, true);
       } else {
+        console.log("Blocked by CORS:", origin); // Debugging
         callback(new Error('Not allowed by CORS'));
       }
     },
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    credentials: true, // Allow cookies & authorization headers
+    credentials: true,
   })
 );
+
 connectdb().catch((err) => console.error("DB Connection Error:", err));
 
 
