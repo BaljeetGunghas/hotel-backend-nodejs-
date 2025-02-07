@@ -9,7 +9,7 @@ import { checkAuth, deleteUser, forgotPassword, isUserRegistered, login, logout,
 const router = ex.Router();
 
 router.get("/check-auth", isAutheticated, async (req: Request, res: Response) => { await checkAuth(req, res) });
-
+router.get("/",(req: Request, res: Response) => { res.send("User Route") });
 router.post("/signup", async (req: Request, res: Response) => { await signup(req, res) });
 router.post("/login", async (req: Request, res: Response) => { await login(req, res) });
 router.post("/isUserRegistered", async (req: Request, res: Response) => { await isUserRegistered(req, res) });
