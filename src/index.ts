@@ -31,6 +31,7 @@ app.use(
     credentials: true,
   })
 );
+ connectdb();
 
 app.use(bodyParser.json({ limit: '10mb' }));
 
@@ -56,7 +57,4 @@ app.use('/api/v1/hotel', hotelroutes); // hotel routes
 app.use('/api/v1/hotel-room', hotelRooms); // hotel routes
 
 // start the server
-app.listen(PORT, async () => {
-  await connectdb();
-  console.log(`Server is running on http://localhost:${PORT}`);
-});
+export default app;
