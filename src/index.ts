@@ -13,7 +13,7 @@ dotenv.config({ path: evn });
 
 const app = express();
 const allowedOrigins = [
-  'https://velvet-haven.netlify.app/', // production URL
+  'https://velvet-haven.netlify.app', // production URL
   /^http:\/\/localhost:\d+$/ // allow any localhost with dynamic ports
 ];
 app.options('*', cors());
