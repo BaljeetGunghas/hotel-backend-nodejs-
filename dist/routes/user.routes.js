@@ -41,14 +41,21 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const isAuthenticated_1 = require("../middlewares/isAuthenticated");
 const ex = __importStar(require("express"));
+const express_1 = __importDefault(require("express"));
 const user_controller_1 = require("../Controller/user.controller");
 const router = ex.Router();
+const app = (0, express_1.default)();
 router.get("/check-auth", isAuthenticated_1.isAutheticated, (req, res) => __awaiter(void 0, void 0, void 0, function* () { yield (0, user_controller_1.checkAuth)(req, res); }));
+app.get("/", (req, res) => { res.send("User Route"); });
 router.post("/signup", (req, res) => __awaiter(void 0, void 0, void 0, function* () { yield (0, user_controller_1.signup)(req, res); }));
 router.post("/login", (req, res) => __awaiter(void 0, void 0, void 0, function* () { yield (0, user_controller_1.login)(req, res); }));
+router.post("/isUserRegistered", (req, res) => __awaiter(void 0, void 0, void 0, function* () { yield (0, user_controller_1.isUserRegistered)(req, res); }));
 router.post("/logout", (req, res) => __awaiter(void 0, void 0, void 0, function* () { yield (0, user_controller_1.logout)(req, res); }));
 router.post("/verfication-email-token-reset", (req, res) => __awaiter(void 0, void 0, void 0, function* () { yield (0, user_controller_1.resetEmailVerificationToken)(req, res); }));
 router.post("/verify-email", (req, res) => __awaiter(void 0, void 0, void 0, function* () { yield (0, user_controller_1.VerifyEmail)(req, res); }));
