@@ -20,15 +20,15 @@ app.options('*', cors());
 app.use(
   cors({
     origin: (origin, callback) => {
-      console.log('Origin:', origin);  // Log the origin for debugging
-      if (!origin || allowedOrigins.includes(origin)) {
+      console.log('Request Origin:', origin);  // Debugging log
+      if (!origin || allowedOrigins.some((o) => (typeof o === "string" ? o === origin : o.test(origin)))) {
         callback(null, true);
       } else {
         callback(new Error('Not allowed by CORS'));
       }
     },
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    credentials: true,
+    credentials: true, // Allow cookies & authorization headers
   })
 );
 connectdb().catch((err) => console.error("DB Connection Error:", err));
