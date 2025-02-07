@@ -53,7 +53,7 @@ var __rest = (this && this.__rest) || function (s, e) {
     return t;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteUser = exports.updateProfile = exports.checkAuth = exports.resetPassword = exports.resetEmailVerificationToken = exports.forgotPassword = exports.logout = exports.VerifyEmail = exports.login = exports.signup = void 0;
+exports.deleteUser = exports.updateProfile = exports.checkAuth = exports.resetPassword = exports.resetEmailVerificationToken = exports.forgotPassword = exports.logout = exports.VerifyEmail = exports.isUserRegistered = exports.login = exports.signup = void 0;
 const user_model_1 = require("../Model/user.model");
 const crypto = __importStar(require("crypto"));
 const genrateToken_1 = require("../utils/genrateToken");
@@ -80,7 +80,7 @@ const signup = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         const token = yield (0, genrateToken_1.genrateToken)(res, user);
         // await sendVerificationEmail(email, name, verificationToken);
         yield user.save();
-        const _a = user.toObject(), { password: _, verificationToken: __, verificationTokenExpires: ___ } = _a, userWithoutSensitiveData = __rest(_a, ["password", "verificationToken", "verificationTokenExpires"]);
+        const _a = user.toObject(), { password: _, verificationToken: __, verificationTokenExpires: ___, resetPasswordToken: ____, resetPasswordExpires: _____ } = _a, userWithoutSensitiveData = __rest(_a, ["password", "verificationToken", "verificationTokenExpires", "resetPasswordToken", "resetPasswordExpires"]);
         return res
             .status(201)
             .cookie("token", token, {
@@ -91,7 +91,8 @@ const signup = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             .json({
             output: 1,
             message: "User created successfully",
-            user: userWithoutSensitiveData,
+            jsonResponse: userWithoutSensitiveData,
+            token: token,
         });
     }
     catch (error) {
@@ -121,7 +122,7 @@ const login = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         }
         user.lastLogin = new Date();
         yield user.save();
-        const UserWithoutPassword = yield user_model_1.User.find({ email: email }, { password: 0, verificationToken: 0, verificationTokenExpires: 0, resetPasswordToken: 0, resetPasswordExpires: 0, __v: 0 });
+        const UserWithoutPassword = yield user_model_1.User.findOne({ email: email }, { password: 0, verificationToken: 0, verificationTokenExpires: 0, resetPasswordToken: 0, resetPasswordExpires: 0, __v: 0 });
         const token = yield (0, genrateToken_1.genrateToken)(res, user);
         return res.status(200)
             .cookie("token", token, {
@@ -144,6 +145,31 @@ const login = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 exports.login = login;
+const isUserRegistered = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { email } = req.body;
+        const user = yield user_model_1.User.findOne({ email });
+        if (user) {
+            return res.status(200).json({
+                output: 1,
+                message: "User already registered",
+                jsonResponse: null,
+            });
+        }
+        return res.status(200).json({
+            output: 0,
+            message: "User not registered",
+            jsonResponse: null,
+        });
+    }
+    catch (error) {
+        console.log(error);
+        return res.status(500).json({
+            message: "Failed to check user registration",
+        });
+    }
+});
+exports.isUserRegistered = isUserRegistered;
 const VerifyEmail = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { token } = req.body;
