@@ -53,7 +53,7 @@ var __rest = (this && this.__rest) || function (s, e) {
     return t;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteUser = exports.updateProfile = exports.checkAuth = exports.resetPassword = exports.resetEmailVerificationToken = exports.forgotPassword = exports.logout = exports.VerifyEmail = exports.isUserRegistered = exports.login = exports.signup = void 0;
+exports.deleteUser = exports.getUserProfile = exports.updateProfile = exports.checkAuth = exports.resetPassword = exports.resetEmailVerificationToken = exports.forgotPassword = exports.logout = exports.VerifyEmail = exports.isUserRegistered = exports.login = exports.signup = void 0;
 const user_model_1 = require("../Model/user.model");
 const crypto = __importStar(require("crypto"));
 const genrateToken_1 = require("../utils/genrateToken");
@@ -355,6 +355,27 @@ const updateProfile = (req, res) => __awaiter(void 0, void 0, void 0, function* 
     }
 });
 exports.updateProfile = updateProfile;
+const getUserProfile = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const userID = req.userID; // Assuming userID is attached to the request by middleware
+        const user = yield user_model_1.User.findById(userID, { password: 0, verificationToken: 0, verificationTokenExpires: 0, resetPasswordToken: 0, resetPasswordExpires: 0, __v: 0 });
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+        return res.status(200).json({
+            output: 1,
+            jsonResponse: user,
+            message: 'ok'
+        });
+    }
+    catch (error) {
+        console.error("Get User Profile Error: ", error);
+        return res.status(500).json({
+            message: "Failed to get user profile",
+        });
+    }
+});
+exports.getUserProfile = getUserProfile;
 const deleteUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     return res.status(200).json({ msg: "delete user" });
 });
