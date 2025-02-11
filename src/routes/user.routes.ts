@@ -5,7 +5,7 @@ import express from 'express';
 
 
 
-import { checkAuth, deleteUser, forgotPassword, isUserRegistered, login, logout, resetEmailVerificationToken, resetPassword, signup, updateProfile, VerifyEmail } from '../Controller/user.controller';
+import { checkAuth, deleteUser, forgotPassword, getUserProfile, isUserRegistered, login, logout, resetEmailVerificationToken, resetPassword, signup, updateProfile, VerifyEmail } from '../Controller/user.controller';
 
 const router = ex.Router();
 const app = express();
@@ -24,6 +24,6 @@ router.post("/forget-password", async (req: Request, res: Response) => { await f
 router.post("/reset-password", async (req: Request, res: Response) => { await resetPassword(req, res) });
 
 router.put("/profile/update", isAutheticated, async (req: Request, res: Response) => { await updateProfile(req, res) });
-
+router.post("/getUserProfile", isAutheticated, async (req: Request, res: Response) => { await getUserProfile(req, res) });
 
 export default router;

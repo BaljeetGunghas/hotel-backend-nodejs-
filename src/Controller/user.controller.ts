@@ -343,6 +343,27 @@ export const updateProfile = async (req: Request, res: Response): Promise<Respon
     }
 };
 
+export const getUserProfile = async (req: Request, res: Response): Promise<Response> => {
+    try {
+        const userID = req.userID; // Assuming userID is attached to the request by middleware
+        const user = await User.findById(userID, { password: 0, verificationToken: 0, verificationTokenExpires: 0, resetPasswordToken: 0, resetPasswordExpires: 0, __v: 0 });
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        return res.status(200).json({
+            output: 1,
+            jsonResponse: user,
+            message: 'ok'
+        });
+    } catch (error) {
+        console.error("Get User Profile Error: ", error);
+        return res.status(500).json({
+            message: "Failed to get user profile",
+        });
+    }
+};
+
 
 export const deleteUser = async (req: Request, res: Response) => {
     return res.status(200).json({ msg: "delete user" });
