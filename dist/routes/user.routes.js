@@ -62,4 +62,5 @@ router.post("/verify-email", (req, res) => __awaiter(void 0, void 0, void 0, fun
 router.post("/forget-password", (req, res) => __awaiter(void 0, void 0, void 0, function* () { yield (0, user_controller_1.forgotPassword)(req, res); }));
 router.post("/reset-password", (req, res) => __awaiter(void 0, void 0, void 0, function* () { yield (0, user_controller_1.resetPassword)(req, res); }));
 router.put("/profile/update", isAuthenticated_1.isAutheticated, (req, res) => __awaiter(void 0, void 0, void 0, function* () { yield (0, user_controller_1.updateProfile)(req, res); }));
+router.post("/getUserProfile", isAuthenticated_1.isAutheticated, (req, res) => __awaiter(void 0, void 0, void 0, function* () { yield (0, user_controller_1.getUserProfile)(req, res); }));
 exports.default = router;
