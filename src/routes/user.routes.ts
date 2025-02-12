@@ -5,7 +5,7 @@ import express from 'express';
 
 
 
-import { checkAuth, deleteUser, forgotPassword, getUserProfile, isUserRegistered, login, logout, resetEmailVerificationToken, resetPassword, signup, updateProfile, VerifyEmail } from '../Controller/user.controller';
+import { checkAuth, deleteUser, forgotPassword, getUserProfile, isUserRegistered, login, logout, sendEmailVerificationToken, resetPassword, signup, updateProfile, VerifyEmail } from '../Controller/user.controller';
 
 const router = ex.Router();
 const app = express();
@@ -17,8 +17,8 @@ router.post("/login", async (req: Request, res: Response) => { await login(req, 
 router.post("/isUserRegistered", async (req: Request, res: Response) => { await isUserRegistered(req, res) });
 router.post("/logout", async (req: Request, res: Response) => { await logout(req, res) });
 
-router.post("/verfication-email-token-reset", async (req: Request, res: Response) => { await resetEmailVerificationToken(req, res) });
-router.post("/verify-email", async (req: Request, res: Response) => { await VerifyEmail(req, res) });
+router.post("/verfication-email-token-send", isAutheticated, async (req: Request, res: Response) => { await sendEmailVerificationToken(req, res) });
+router.post("/verify-email", isAutheticated, async (req: Request, res: Response) => { await VerifyEmail(req, res) });
 
 router.post("/forget-password", async (req: Request, res: Response) => { await forgotPassword(req, res) });
 router.post("/reset-password", async (req: Request, res: Response) => { await resetPassword(req, res) });

@@ -130,6 +130,14 @@ export const createRoom = async (req: Request, res: Response) => {
             check_out_time,
         });
         await room.save();
+
+        const hotel = await Hotel.findById(hotel_id);
+
+        if (hotel) {
+            hotel.rooms += 1;
+            await hotel.save();
+        }
+
         return res.status(201).json({
             output: 1,
             message: "Room created successfully",

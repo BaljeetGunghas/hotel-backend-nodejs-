@@ -11,6 +11,7 @@ export interface IHotel {
     country: number;
     postal_code: string;
     rating: number;
+    rooms: number;
     reviews: mongoose.Schema.Types.ObjectId[];
     policies?: Object;
     cancellation_policy?: Object;
@@ -36,6 +37,7 @@ const hotelSchema = new mongoose.Schema<IHotelDocument>({
     country: { type: Number, required: true },
     postal_code: { type: String, required: true },
     rating: { type: Number, min: 0, max: 5, default: 0 },
+    rooms: { type: Number, default: 0 },
     reviews: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Hotel_Review' }],
     policies: { type: Object }, // JSON object for policies like check-in, check-out, etc.
     cancellation_policy: { type: Object }, // JSON object for cancellation rules    
