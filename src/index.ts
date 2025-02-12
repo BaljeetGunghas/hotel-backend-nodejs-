@@ -7,6 +7,7 @@ import { connectdb } from './db/connection';
 import userroutes from './routes/user.routes';
 import hotelroutes from './routes/hotel.routes';
 import hotelRooms from './routes/room.routes';
+import host from './routes/host.routes';
 const evn = "../.env";
 
 dotenv.config({ path: evn });
@@ -20,7 +21,6 @@ const allowedOrigins = [
 app.use(
   cors({
     origin: (origin, callback) => {
-      console.log('Origin:', origin); // ✅ Log for debugging
       if (!origin || allowedOrigins.some((o) => o instanceof RegExp ? o.test(origin) : o === origin)) {
         callback(null, true);
       } else {
@@ -58,6 +58,7 @@ app.get('/', (req, res) => {
 app.use('/api/v1/user', userroutes);  // user routes
 app.use('/api/v1/hotel', hotelroutes); // hotel routes
 app.use('/api/v1/hotel-room', hotelRooms); // hotel routes
+app.use('/api/v1/host', host); // hotel routes
 
 // start the server
 app.listen(PORT, async () => {

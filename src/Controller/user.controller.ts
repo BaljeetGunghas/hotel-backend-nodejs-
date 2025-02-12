@@ -140,44 +140,74 @@ export const isUserRegistered = async (req: Request, res: Response) => {
 
 export const VerifyEmail = async (req: Request, res: Response) => {
     try {
-        const { token } = req.body;
-        const user = await User.findOne(
-            {
-                verificationToken: token,
-                verificationTokenExpires: { $gt: Date.now() },
-            },
-            {
-                password: 0,
-                verificationToken: 0,
-                verificationTokenExpires: 0,
-                resetPasswordToken: 0,
-                resetPasswordExpires: 0,
-                __v: 0,
-            }
-        );
-        if (!user) {
-            return res.status(400).json({ message: "Invalid token" });
+        const { otp } = req.body; // Get email and OTP from request body
+        const userID = req.userID;
+        if (!userID || !otp) {
+            return res.status(400).json({ message: "Email and OTP are required" });
         }
+
+        // Find user with matching email and OTP that hasn't expired
+        const user = await User.findOne({
+            _id: userID,
+            verificationToken: otp, // Match OTP
+            verificationTokenExpires: { $gt: Date.now() }, // Check expiry
+        });
+
+        if (!user) {
+            return res.status(400).json({ message: "Invalid or expired OTP" });
+        }
+
+        // Mark user as verified
         user.isVerified = true;
-        user.verificationToken = "";
+        user.verificationToken = ""; // Clear OTP
         user.verificationTokenExpires = null;
         await user.save();
-
-        // send user welcome Email
-        // await sendWelcomeEmail(user.email, user.name);
 
         return res.status(200).json({
             output: 1,
             message: "Email verified successfully",
-            jsonResponse: user,
+            jsonResponse: {
+                _id: user._id,
+                email: user.email,
+                isVerified: user.isVerified,
+            },
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: "Failed to verify email" });
+    }
+};
+
+
+export const sendEmailVerificationToken = async (req: Request, res: Response) => {
+    try {
+        const userID = req.userID;
+        const user = await User.findById(userID);
+        if (!user) {
+            return res.status(400).json({ message: "Email not found" });
+        }
+
+        const verificationToken = generateVerificationCode();
+        user.verificationToken = verificationToken;
+        user.verificationTokenExpires = new Date(Date.now() + 1 * 60 * 60 * 1000); // 1 hour
+        await user.save();
+
+        // send email verification email
+
+        // await sendVerificationEmail(user.email, user.name, user.verificationToken)
+        return res.status(200).json({
+            output: 1,
+            message: "Email verification link sent to your email",
+            jsonResponse: null,
         });
     } catch (error) {
         console.log(error);
-        return res.status(500).json({
-            message: "Failed to verify email",
-        });
+        return res.status(500).json({ message: "Failed to send email verification email" });
     }
-};
+
+}
+
+
 
 export const logout = async (req: Request, res: Response) => {
     try {
@@ -221,37 +251,6 @@ export const forgotPassword = async (req: Request, res: Response) => {
             .json({ message: "Failed to send forgot password email" });
     }
 };
-
-export const resetEmailVerificationToken = async (req: Request, res: Response) => {
-    try {
-        const { email } = req.body;
-        const user = await User.findOne({
-            email,
-        });
-        if (!user) {
-            return res.status(400).json({ message: "Email not found" });
-        }
-
-        const verificationToken = generateVerificationCode();
-        user.verificationToken = verificationToken;
-        user.verificationTokenExpires = new Date(Date.now() + 1 * 60 * 60 * 1000);
-        await user.save();
-
-        // send email verification email
-        // await sendVerificationEmail(user.email, user.name, user.verificationToken);
-        return res.status(200).json({
-            output: 1,
-            message: "Email verification link sent to your email",
-            jsonResponse: null,
-        });
-    } catch (error) {
-        console.log(error);
-        return res.status(500).json({ message: "Failed to send email verification email" });
-    }
-
-}
-
-
 
 
 
@@ -329,6 +328,7 @@ export const updateProfile = async (req: Request, res: Response): Promise<Respon
             }
         }
 
+        user.updated_at = new Date();
         await user.save();
 
         return res.status(200).json({
