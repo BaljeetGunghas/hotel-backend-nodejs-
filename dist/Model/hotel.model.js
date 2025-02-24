@@ -18,6 +18,7 @@ const hotelSchema = new mongoose_1.default.Schema({
     country: { type: Number, required: true },
     postal_code: { type: String, required: true },
     rating: { type: Number, min: 0, max: 5, default: 0 },
+    rooms: { type: Number, default: 0 },
     reviews: [{ type: mongoose_1.default.Schema.Types.ObjectId, ref: 'Hotel_Review' }],
     policies: { type: Object }, // JSON object for policies like check-in, check-out, etc.
     cancellation_policy: { type: Object }, // JSON object for cancellation rules    

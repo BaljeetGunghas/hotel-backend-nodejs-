@@ -21,6 +21,7 @@ const connection_1 = require("./db/connection");
 const user_routes_1 = __importDefault(require("./routes/user.routes"));
 const hotel_routes_1 = __importDefault(require("./routes/hotel.routes"));
 const room_routes_1 = __importDefault(require("./routes/room.routes"));
+const host_routes_1 = __importDefault(require("./routes/host.routes"));
 const evn = "../.env";
 dotenv_1.default.config({ path: evn });
 const app = (0, express_1.default)();
@@ -30,7 +31,6 @@ const allowedOrigins = [
 ];
 app.use((0, cors_1.default)({
     origin: (origin, callback) => {
-        console.log('Origin:', origin); // ✅ Log for debugging
         if (!origin || allowedOrigins.some((o) => o instanceof RegExp ? o.test(origin) : o === origin)) {
             callback(null, true);
         }
@@ -60,6 +60,7 @@ app.get('/', (req, res) => {
 app.use('/api/v1/user', user_routes_1.default); // user routes
 app.use('/api/v1/hotel', hotel_routes_1.default); // hotel routes
 app.use('/api/v1/hotel-room', room_routes_1.default); // hotel routes
+app.use('/api/v1/host', host_routes_1.default); // hotel routes
 // start the server
 app.listen(PORT, () => __awaiter(void 0, void 0, void 0, function* () {
     console.log(`Server is running on http://localhost:${PORT}`);

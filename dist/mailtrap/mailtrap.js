@@ -9,3 +9,5 @@ exports.sender = {
     email: "hello@demomailtrap.com",
     name: "Hotel Web",
 };
+// import dotenv from 'dotenv';
+// dotenv.config({ path: evn });

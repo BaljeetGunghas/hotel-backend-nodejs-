@@ -53,7 +53,7 @@ var __rest = (this && this.__rest) || function (s, e) {
     return t;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteUser = exports.getUserProfile = exports.updateProfile = exports.checkAuth = exports.resetPassword = exports.resetEmailVerificationToken = exports.forgotPassword = exports.logout = exports.VerifyEmail = exports.isUserRegistered = exports.login = exports.signup = void 0;
+exports.deleteUser = exports.getUserProfile = exports.updateProfile = exports.checkAuth = exports.resetPassword = exports.forgotPassword = exports.logout = exports.sendEmailVerificationToken = exports.VerifyEmail = exports.isUserRegistered = exports.login = exports.signup = void 0;
 const user_model_1 = require("../Model/user.model");
 const crypto = __importStar(require("crypto"));
 const genrateToken_1 = require("../utils/genrateToken");
@@ -172,41 +172,66 @@ const isUserRegistered = (req, res) => __awaiter(void 0, void 0, void 0, functio
 exports.isUserRegistered = isUserRegistered;
 const VerifyEmail = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { token } = req.body;
+        const { otp } = req.body; // Get email and OTP from request body
+        const userID = req.userID;
+        if (!userID || !otp) {
+            return res.status(400).json({ message: "Email and OTP are required" });
+        }
+        // Find user with matching email and OTP that hasn't expired
         const user = yield user_model_1.User.findOne({
-            verificationToken: token,
-            verificationTokenExpires: { $gt: Date.now() },
-        }, {
-            password: 0,
-            verificationToken: 0,
-            verificationTokenExpires: 0,
-            resetPasswordToken: 0,
-            resetPasswordExpires: 0,
-            __v: 0,
+            _id: userID,
+            verificationToken: otp, // Match OTP
+            verificationTokenExpires: { $gt: Date.now() }, // Check expiry
         });
         if (!user) {
-            return res.status(400).json({ message: "Invalid token" });
+            return res.status(400).json({ message: "Invalid or expired OTP" });
         }
+        // Mark user as verified
         user.isVerified = true;
-        user.verificationToken = "";
+        user.verificationToken = ""; // Clear OTP
         user.verificationTokenExpires = null;
         yield user.save();
-        // send user welcome Email
-        // await sendWelcomeEmail(user.email, user.name);
         return res.status(200).json({
             output: 1,
             message: "Email verified successfully",
-            jsonResponse: user,
+            jsonResponse: {
+                _id: user._id,
+                email: user.email,
+                isVerified: user.isVerified,
+            },
+        });
+    }
+    catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: "Failed to verify email" });
+    }
+});
+exports.VerifyEmail = VerifyEmail;
+const sendEmailVerificationToken = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const userID = req.userID;
+        const user = yield user_model_1.User.findById(userID);
+        if (!user) {
+            return res.status(400).json({ message: "Email not found" });
+        }
+        const verificationToken = (0, genrateVerificationCode_1.generateVerificationCode)();
+        user.verificationToken = verificationToken;
+        user.verificationTokenExpires = new Date(Date.now() + 1 * 60 * 60 * 1000); // 1 hour
+        yield user.save();
+        // send email verification email
+        // await sendVerificationEmail(user.email, user.name, user.verificationToken)
+        return res.status(200).json({
+            output: 1,
+            message: "Email verification link sent to your email",
+            jsonResponse: null,
         });
     }
     catch (error) {
         console.log(error);
-        return res.status(500).json({
-            message: "Failed to verify email",
-        });
+        return res.status(500).json({ message: "Failed to send email verification email" });
     }
 });
-exports.VerifyEmail = VerifyEmail;
+exports.sendEmailVerificationToken = sendEmailVerificationToken;
 const logout = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         return res.clearCookie("token").status(200).json({
@@ -247,33 +272,6 @@ const forgotPassword = (req, res) => __awaiter(void 0, void 0, void 0, function*
     }
 });
 exports.forgotPassword = forgotPassword;
-const resetEmailVerificationToken = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        const { email } = req.body;
-        const user = yield user_model_1.User.findOne({
-            email,
-        });
-        if (!user) {
-            return res.status(400).json({ message: "Email not found" });
-        }
-        const verificationToken = (0, genrateVerificationCode_1.generateVerificationCode)();
-        user.verificationToken = verificationToken;
-        user.verificationTokenExpires = new Date(Date.now() + 1 * 60 * 60 * 1000);
-        yield user.save();
-        // send email verification email
-        // await sendVerificationEmail(user.email, user.name, user.verificationToken);
-        return res.status(200).json({
-            output: 1,
-            message: "Email verification link sent to your email",
-            jsonResponse: null,
-        });
-    }
-    catch (error) {
-        console.log(error);
-        return res.status(500).json({ message: "Failed to send email verification email" });
-    }
-});
-exports.resetEmailVerificationToken = resetEmailVerificationToken;
 const resetPassword = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { token, password } = req.body;
@@ -328,23 +326,29 @@ const checkAuth = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
 });
 exports.checkAuth = checkAuth;
 const updateProfile = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b;
     try {
         const userID = req.userID; // Assuming userID is attached to the request by middleware
         const user = yield user_model_1.User.findById(userID);
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
-        // Update only the fields provided in the request body
         const updateData = req.body;
         for (const [key, value] of Object.entries(updateData)) {
             if (value !== undefined && value !== null) {
                 user[key] = value; // Dynamically update only provided fields
             }
         }
+        const imageUrl = ((_b = (_a = req === null || req === void 0 ? void 0 : req.file) === null || _a === void 0 ? void 0 : _a.path) === null || _b === void 0 ? void 0 : _b.split("image/upload/")[1]) || null;
+        if (imageUrl) {
+            user.profile_picture = imageUrl;
+        }
+        user.updated_at = new Date();
         yield user.save();
         return res.status(200).json({
             output: 1,
             message: "Profile updated successfully",
+            jsonResponse: null,
         });
     }
     catch (error) {
