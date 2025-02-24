@@ -113,6 +113,11 @@ const createRoom = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
             check_out_time,
         });
         yield room.save();
+        const hotel = yield hotel_model_1.Hotel.findById(hotel_id);
+        if (hotel) {
+            hotel.rooms += 1;
+            yield hotel.save();
+        }
         return res.status(201).json({
             output: 1,
             message: "Room created successfully",

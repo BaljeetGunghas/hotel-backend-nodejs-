@@ -319,7 +319,6 @@ export const updateProfile = async (req: Request, res: Response): Promise<Respon
             return res.status(404).json({ message: "User not found" });
         }
 
-        // Update only the fields provided in the request body
         const updateData = req.body;
 
         for (const [key, value] of Object.entries(updateData)) {
@@ -327,13 +326,17 @@ export const updateProfile = async (req: Request, res: Response): Promise<Respon
                 (user as any)[key] = value; // Dynamically update only provided fields
             }
         }
-
+        const imageUrl = (req?.file as any)?.path?.split("image/upload/")[1] || null;
+        if (imageUrl) {
+            user.profile_picture = imageUrl;
+        }
         user.updated_at = new Date();
         await user.save();
 
         return res.status(200).json({
             output: 1,
             message: "Profile updated successfully",
+            jsonResponse: null,
         });
     } catch (error) {
         console.error("Update Profile Error: ", error);
