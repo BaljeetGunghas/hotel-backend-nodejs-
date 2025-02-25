@@ -187,6 +187,15 @@ export const updateRoom = async (req: Request, res: Response) => {
             });
         }
 
+        if (req.userID !== room.hostid.toString()) {
+            return res.status(403).json({
+                output: 0,
+                message: "You are not authorized to update this room!",
+                jsonResponse: null
+            });
+        }
+
+
         const updatedRoom = {
             room_number: room_number || room.room_number,
             room_type: room_type || room.room_type,
@@ -201,7 +210,18 @@ export const updateRoom = async (req: Request, res: Response) => {
             description: description || room.description,
             check_in_time: check_in_time || room.check_in_time,
             check_out_time: check_out_time || room.check_out_time,
+            room_images: room.room_images,
         };
+
+        const currentImages = room.room_images || [];
+        const newImages = (req?.files as Express.Multer.File[])?.map((file: any) => (file as any)?.path?.split("image/upload/")[1] || null) ?? [];
+        const updatedImages = [...currentImages, ...newImages];
+        if (updatedImages.length) {
+            updatedRoom.room_images = updatedImages;
+        }
+
+
+
         const updatedRoomDoc = await Room.findByIdAndUpdate(room_id, updatedRoom, {
             new: true,
         });

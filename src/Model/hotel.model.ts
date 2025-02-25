@@ -18,6 +18,7 @@ export interface IHotel {
     contact_number: number;
     email: string;
     status: string;
+    hotel_image: string[] | null;
 };
 
 export interface IHotelDocument extends IHotel, Document {
@@ -44,6 +45,7 @@ const hotelSchema = new mongoose.Schema<IHotelDocument>({
     contact_number: { type: Number, required: true, minlength: 10, maxlength: 10, unique: true },
     email: { type: String },
     status: { type: String, enum: ['active', 'inactive'], default: 'active' },
+    hotel_image: { type: [String], maxlength: 5, default: null },
 }, { timestamps: true });
 
 export const Hotel = mongoose.model('Hotel', hotelSchema);

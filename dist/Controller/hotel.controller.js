@@ -154,6 +154,7 @@ const createHotel = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
 });
 exports.createHotel = createHotel;
 const updatespacificHotelbyHotelId = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b;
     try {
         const { hotelId, name, owner_name, description, address, city, state, country, postal_code, policies, cancellation_policy, contact_number, email, status } = req.body;
         if (!hotelId) {
@@ -168,6 +169,13 @@ const updatespacificHotelbyHotelId = (req, res) => __awaiter(void 0, void 0, voi
             return res.status(404).json({
                 output: 0,
                 message: "Hotel not found",
+                jsonResponse: null
+            });
+        }
+        if (req.userID !== hotel.hostid.toString()) {
+            return res.status(403).json({
+                output: 0,
+                message: "You are not authorized to update this hotel",
                 jsonResponse: null
             });
         }
@@ -187,6 +195,12 @@ const updatespacificHotelbyHotelId = (req, res) => __awaiter(void 0, void 0, voi
             status,
         };
         const filteredHotelData = Object.fromEntries(Object.entries(hotelData).filter(([_, value]) => value !== undefined && value !== null));
+        const currentImages = hotel.hotel_image || [];
+        const newImages = (_b = (_a = req === null || req === void 0 ? void 0 : req.files) === null || _a === void 0 ? void 0 : _a.map((file) => { var _a; return ((_a = file === null || file === void 0 ? void 0 : file.path) === null || _a === void 0 ? void 0 : _a.split("image/upload/")[1]) || null; })) !== null && _b !== void 0 ? _b : [];
+        const updatedImages = [...currentImages, ...newImages];
+        if (updatedImages.length) {
+            filteredHotelData.hotel_image = updatedImages;
+        }
         const updatedHotel = yield hotel_model_1.Hotel.findByIdAndUpdate(hotelId, filteredHotelData, { new: true });
         return res.status(200).json({
             output: 1,

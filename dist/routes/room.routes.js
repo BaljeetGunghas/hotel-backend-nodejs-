@@ -41,15 +41,19 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const isAuthenticated_1 = require("../middlewares/isAuthenticated");
 const ex = __importStar(require("express"));
 const room_controller_1 = require("../Controller/room.controller");
+const uploadMulti_1 = __importDefault(require("../Helper/uploadMulti"));
 const router = ex.Router();
 router.post("/get-allroom-list", (req, res) => __awaiter(void 0, void 0, void 0, function* () { yield (0, room_controller_1.getAllRooms)(req, res); }));
 router.post("/get-specific-room-details", (req, res) => __awaiter(void 0, void 0, void 0, function* () { yield (0, room_controller_1.getSpacificRoombyRoomId)(req, res); }));
 router.post("/create-room", isAuthenticated_1.isAutheticated, (req, res) => __awaiter(void 0, void 0, void 0, function* () { yield (0, room_controller_1.createRoom)(req, res); }));
-router.put("/update-roomby-roomid", isAuthenticated_1.isAutheticated, (req, res) => __awaiter(void 0, void 0, void 0, function* () { yield (0, room_controller_1.updateRoom)(req, res); }));
+router.put("/update-roomby-roomid", isAuthenticated_1.isAutheticated, uploadMulti_1.default, (req, res) => __awaiter(void 0, void 0, void 0, function* () { yield (0, room_controller_1.updateRoom)(req, res); }));
 router.post("/delete-roomby-roomid", isAuthenticated_1.isAutheticated, (req, res) => __awaiter(void 0, void 0, void 0, function* () { yield (0, room_controller_1.deleteRoom)(req, res); }));
 router.post("/get-rooms-by-hotel", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     yield (0, room_controller_1.getRoomsByHotel)(req, res);

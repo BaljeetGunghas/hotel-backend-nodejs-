@@ -8,7 +8,7 @@ export const getHotelsList = async (req: Request, res: Response) => {
     try {
         const hotels = await Hotel.find().populate('hotel_reviews');
 
-        
+
         res.status(200).json({
             output: 1,
             message: "Hotels fetched successfully",
@@ -55,60 +55,60 @@ export const getspacificHotelbyHotelId = async (req: Request, res: Response) => 
 }
 
 export const getSpecificHotelDetailsByHotelId = async (req: Request, res: Response) => {
-  try {
-    const { hotelId } = req.body;
+    try {
+        const { hotelId } = req.body;
 
-    if (!hotelId) {
-      return res.status(400).json({
-        output: 0,
-        message: "Hotel ID is required",
-        jsonResponse: null,
-      });
+        if (!hotelId) {
+            return res.status(400).json({
+                output: 0,
+                message: "Hotel ID is required",
+                jsonResponse: null,
+            });
+        }
+
+        // Fetch the hotel details
+        const hotel = await Hotel.findById(hotelId).select({ __v: 0 });
+        if (!hotel) {
+            return res.status(404).json({
+                output: 0,
+                message: "Hotel not found",
+                jsonResponse: null,
+            });
+        }
+
+        // Fetch hotel reviews
+        const hotelReviews = await Hotel_Review.find({ hotel_id: hotelId }, { __v: 0 });
+
+        // Fetch rooms in the hotel
+        const rooms = await Room.find({ hotel_id: hotelId }, { __v: 0 });
+
+        // Fetch reviews for each room
+        const roomsWithReviews = await Promise.all(
+            rooms.map(async (room) => {
+                const roomReviews = await Room_Review.find({ room_id: room._id }, { __v: 0 });
+                return {
+                    ...room.toObject(),
+                    reviews: roomReviews.length > 0 ? roomReviews : null,
+                };
+            })
+        );
+
+        // Construct the response object
+        return res.status(200).json({
+            output: 1,
+            message: "Hotel fetched successfully",
+            jsonResponse: {
+                ...hotel.toObject(),
+                reviews: hotelReviews.length > 0 ? hotelReviews : null,
+                rooms: roomsWithReviews.length > 0 ? roomsWithReviews : null,
+            },
+        });
+    } catch (error) {
+        return res.status(500).json({
+            output: 0,
+            message: (error as Error).message,
+        });
     }
-
-    // Fetch the hotel details
-    const hotel = await Hotel.findById(hotelId).select({ __v: 0 });
-    if (!hotel) {
-      return res.status(404).json({
-        output: 0,
-        message: "Hotel not found",
-        jsonResponse: null,
-      });
-    }
-
-    // Fetch hotel reviews
-    const hotelReviews = await Hotel_Review.find({ hotel_id: hotelId }, { __v: 0 });
-
-    // Fetch rooms in the hotel
-    const rooms = await Room.find({ hotel_id: hotelId }, { __v: 0 });
-
-    // Fetch reviews for each room
-    const roomsWithReviews = await Promise.all(
-      rooms.map(async (room) => {
-        const roomReviews = await Room_Review.find({ room_id: room._id }, { __v: 0 });
-        return {
-          ...room.toObject(),
-          reviews: roomReviews.length > 0 ? roomReviews : null,
-        };
-      })
-    );
-
-    // Construct the response object
-    return res.status(200).json({
-      output: 1,
-      message: "Hotel fetched successfully",
-      jsonResponse: {
-        ...hotel.toObject(),
-        reviews: hotelReviews.length > 0 ? hotelReviews : null,
-        rooms: roomsWithReviews.length > 0 ? roomsWithReviews : null,
-      },
-    });
-  } catch (error) {
-    return res.status(500).json({
-      output: 0,
-      message: (error as Error).message,
-    });
-  }
 };
 
 export const createHotel = async (req: Request, res: Response) => {
@@ -188,6 +188,16 @@ export const updatespacificHotelbyHotelId = async (req: Request, res: Response) 
             });
         }
 
+
+        if (req.userID !== hotel.hostid.toString()) {
+            return res.status(403).json({
+                output: 0,
+                message: "You are not authorized to update this hotel",
+                jsonResponse: null
+            });
+        }
+
+
         const hotelData = {
             name,
             owner_name,
@@ -209,7 +219,12 @@ export const updatespacificHotelbyHotelId = async (req: Request, res: Response) 
                 ([_, value]) => value !== undefined && value !== null
             )
         );
-
+        const currentImages = hotel.hotel_image || [];
+        const newImages = (req?.files as Express.Multer.File[])?.map((file: any) => (file as any)?.path?.split("image/upload/")[1] || null) ?? [];
+        const updatedImages = [...currentImages, ...newImages];
+        if (updatedImages.length) {
+            filteredHotelData.hotel_image = updatedImages;
+        }
         const updatedHotel = await Hotel.findByIdAndUpdate(hotelId, filteredHotelData, { new: true });
 
         return res.status(200).json({
