@@ -134,6 +134,7 @@ const createRoom = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
 });
 exports.createRoom = createRoom;
 const updateRoom = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b;
     try {
         const { room_id, room_number, room_type, price_per_night, max_occupancy, features, floor_number, bed_type, availability_status, view_type, smoking_allowed, description, check_in_time, check_out_time, } = req.body;
         if (!room_id) {
@@ -151,6 +152,13 @@ const updateRoom = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
                 jsonResponse: null,
             });
         }
+        if (req.userID !== room.hostid.toString()) {
+            return res.status(403).json({
+                output: 0,
+                message: "You are not authorized to update this room!",
+                jsonResponse: null
+            });
+        }
         const updatedRoom = {
             room_number: room_number || room.room_number,
             room_type: room_type || room.room_type,
@@ -165,7 +173,14 @@ const updateRoom = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
             description: description || room.description,
             check_in_time: check_in_time || room.check_in_time,
             check_out_time: check_out_time || room.check_out_time,
+            room_images: room.room_images,
         };
+        const currentImages = room.room_images || [];
+        const newImages = (_b = (_a = req === null || req === void 0 ? void 0 : req.files) === null || _a === void 0 ? void 0 : _a.map((file) => { var _a; return ((_a = file === null || file === void 0 ? void 0 : file.path) === null || _a === void 0 ? void 0 : _a.split("image/upload/")[1]) || null; })) !== null && _b !== void 0 ? _b : [];
+        const updatedImages = [...currentImages, ...newImages];
+        if (updatedImages.length) {
+            updatedRoom.room_images = updatedImages;
+        }
         const updatedRoomDoc = yield room_model_1.Room.findByIdAndUpdate(room_id, updatedRoom, {
             new: true,
         });

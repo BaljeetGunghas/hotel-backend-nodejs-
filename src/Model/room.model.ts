@@ -18,6 +18,7 @@ export interface IRoom {
     reviews: mongoose.Schema.Types.ObjectId[];
     check_in_time: string;
     check_out_time: string;
+    room_images: string[] | null;
 };
 
 export interface IRoomDocument extends IRoom, Document {
@@ -42,7 +43,8 @@ const roomSchema = new mongoose.Schema<IRoomDocument>({
     rating: { type: Number, min: 0, max: 5, default: 0 },
     reviews: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Room_Review' }],
     check_in_time: { type: String, default: "14:00" },
-    check_out_time: { type: String, default: "12:00" }
+    check_out_time: { type: String, default: "12:00" },
+    room_images: { type: [String], maxlength: 5, default: null },
 }, { timestamps: true });
 
 

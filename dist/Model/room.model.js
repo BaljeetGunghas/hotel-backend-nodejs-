@@ -24,6 +24,7 @@ const roomSchema = new mongoose_1.default.Schema({
     rating: { type: Number, min: 0, max: 5, default: 0 },
     reviews: [{ type: mongoose_1.default.Schema.Types.ObjectId, ref: 'Room_Review' }],
     check_in_time: { type: String, default: "14:00" },
-    check_out_time: { type: String, default: "12:00" }
+    check_out_time: { type: String, default: "12:00" },
+    room_images: { type: [String], maxlength: 5, default: null },
 }, { timestamps: true });
 exports.Room = mongoose_1.default.model('Room', roomSchema);
