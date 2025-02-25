@@ -3,12 +3,8 @@ import { User } from "../Model/user.model";
 import * as crypto from "crypto";
 import { genrateToken } from "../utils/genrateToken";
 import { generateVerificationCode } from "../utils/genrateVerificationCode";
-import {
-    passwordResetConfirmationEmail,
-    sendPasswordResetEmail,
-    sendVerificationEmail,
-    sendWelcomeEmail,
-} from "../mailtrap/email";
+import { VerifyEmailTamplate, WelcomeEmailTamplate } from "../emailServices/EmailTamplate";
+import { sendEmail } from "../emailServices/emailService";
 const bcrypt = require("bcrypt");
 
 export const signup = async (req: Request, res: Response) => {
@@ -37,6 +33,9 @@ export const signup = async (req: Request, res: Response) => {
 
         // await sendVerificationEmail(email, name, verificationToken);
 
+        const WelcomeEmailTamplateUpdated = await WelcomeEmailTamplate(name);
+        await sendEmail(email, "Welcome to Velvet Haven", WelcomeEmailTamplateUpdated);
+
         await user.save();
 
         const {
@@ -47,6 +46,8 @@ export const signup = async (req: Request, res: Response) => {
             resetPasswordExpires: _____,
             ...userWithoutSensitiveData
         } = user.toObject();
+
+
         return res
             .status(201)
             .cookie("token", token, {
@@ -137,29 +138,34 @@ export const isUserRegistered = async (req: Request, res: Response) => {
     }
 }
 
-
 export const VerifyEmail = async (req: Request, res: Response) => {
     try {
-        const { otp } = req.body; // Get email and OTP from request body
+        const { otp } = req.body;
         const userID = req.userID;
+
         if (!userID || !otp) {
-            return res.status(400).json({ message: "Email and OTP are required" });
+            return res.status(400).json({ message: "User ID and OTP are required" });
         }
 
-        // Find user with matching email and OTP that hasn't expired
-        const user = await User.findOne({
-            _id: userID,
-            verificationToken: otp, // Match OTP
-            verificationTokenExpires: { $gt: Date.now() }, // Check expiry
-        });
-
+        // Find the user by ID
+        const user = await User.findById(userID);
         if (!user) {
-            return res.status(400).json({ message: "Invalid or expired OTP" });
+            return res.status(200).json({output:0, message: "User not found", jsonResponse: null });
+        }
+
+        // Check if OTP matches
+        if (user.verificationToken !== otp.toString()) {
+            return res.status(200).json({output:0, message: "Incorrect OTP" , jsonResponse: null});
+        }
+
+        // Check if OTP is expired
+        if (!user.verificationTokenExpires || new Date(user.verificationTokenExpires) < new Date()) {
+            return res.status(200).json({output:0, message: "OTP has expired", jsonResponse: null});
         }
 
         // Mark user as verified
         user.isVerified = true;
-        user.verificationToken = ""; // Clear OTP
+        user.verificationToken = null; // Clear OTP
         user.verificationTokenExpires = null;
         await user.save();
 
@@ -173,8 +179,8 @@ export const VerifyEmail = async (req: Request, res: Response) => {
             },
         });
     } catch (error) {
-        console.error(error);
-        return res.status(500).json({ message: "Failed to verify email" });
+        console.error("Email Verification Error:", error);
+        return res.status(500).json({ message: "Internal Server Error" });
     }
 };
 
@@ -184,16 +190,21 @@ export const sendEmailVerificationToken = async (req: Request, res: Response) =>
         const userID = req.userID;
         const user = await User.findById(userID);
         if (!user) {
-            return res.status(400).json({ message: "Email not found" });
+            return res.status(400).json({
+                output: 0,
+                message: "Email not found",
+                jsonResponse: null,
+            });
         }
 
         const verificationToken = generateVerificationCode();
         user.verificationToken = verificationToken;
-        user.verificationTokenExpires = new Date(Date.now() + 1 * 60 * 60 * 1000); // 1 hour
+        user.verificationTokenExpires = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
         await user.save();
 
         // send email verification email
-
+        const VerifyEmailTamplateUpdated = await VerifyEmailTamplate(user.name, verificationToken);
+        await sendEmail(user.email, "Email Verification", VerifyEmailTamplateUpdated);
         // await sendVerificationEmail(user.email, user.name, user.verificationToken)
         return res.status(200).json({
             output: 1,
