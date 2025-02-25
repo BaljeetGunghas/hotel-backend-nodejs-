@@ -58,6 +58,8 @@ const user_model_1 = require("../Model/user.model");
 const crypto = __importStar(require("crypto"));
 const genrateToken_1 = require("../utils/genrateToken");
 const genrateVerificationCode_1 = require("../utils/genrateVerificationCode");
+const EmailTamplate_1 = require("../emailServices/EmailTamplate");
+const emailService_1 = require("../emailServices/emailService");
 const bcrypt = require("bcrypt");
 const signup = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
@@ -79,6 +81,8 @@ const signup = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         });
         const token = yield (0, genrateToken_1.genrateToken)(res, user);
         // await sendVerificationEmail(email, name, verificationToken);
+        const WelcomeEmailTamplateUpdated = yield (0, EmailTamplate_1.WelcomeEmailTamplate)(name);
+        yield (0, emailService_1.sendEmail)(email, "Welcome to Velvet Haven", WelcomeEmailTamplateUpdated);
         yield user.save();
         const _a = user.toObject(), { password: _, verificationToken: __, verificationTokenExpires: ___, resetPasswordToken: ____, resetPasswordExpires: _____ } = _a, userWithoutSensitiveData = __rest(_a, ["password", "verificationToken", "verificationTokenExpires", "resetPasswordToken", "resetPasswordExpires"]);
         return res
@@ -172,23 +176,27 @@ const isUserRegistered = (req, res) => __awaiter(void 0, void 0, void 0, functio
 exports.isUserRegistered = isUserRegistered;
 const VerifyEmail = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { otp } = req.body; // Get email and OTP from request body
+        const { otp } = req.body;
         const userID = req.userID;
         if (!userID || !otp) {
-            return res.status(400).json({ message: "Email and OTP are required" });
+            return res.status(400).json({ message: "User ID and OTP are required" });
         }
-        // Find user with matching email and OTP that hasn't expired
-        const user = yield user_model_1.User.findOne({
-            _id: userID,
-            verificationToken: otp, // Match OTP
-            verificationTokenExpires: { $gt: Date.now() }, // Check expiry
-        });
+        // Find the user by ID
+        const user = yield user_model_1.User.findById(userID);
         if (!user) {
-            return res.status(400).json({ message: "Invalid or expired OTP" });
+            return res.status(200).json({ output: 0, message: "User not found", jsonResponse: null });
+        }
+        // Check if OTP matches
+        if (user.verificationToken !== otp.toString()) {
+            return res.status(200).json({ output: 0, message: "Incorrect OTP", jsonResponse: null });
+        }
+        // Check if OTP is expired
+        if (!user.verificationTokenExpires || new Date(user.verificationTokenExpires) < new Date()) {
+            return res.status(200).json({ output: 0, message: "OTP has expired", jsonResponse: null });
         }
         // Mark user as verified
         user.isVerified = true;
-        user.verificationToken = ""; // Clear OTP
+        user.verificationToken = null; // Clear OTP
         user.verificationTokenExpires = null;
         yield user.save();
         return res.status(200).json({
@@ -202,8 +210,8 @@ const VerifyEmail = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
         });
     }
     catch (error) {
-        console.error(error);
-        return res.status(500).json({ message: "Failed to verify email" });
+        console.error("Email Verification Error:", error);
+        return res.status(500).json({ message: "Internal Server Error" });
     }
 });
 exports.VerifyEmail = VerifyEmail;
@@ -212,13 +220,19 @@ const sendEmailVerificationToken = (req, res) => __awaiter(void 0, void 0, void 
         const userID = req.userID;
         const user = yield user_model_1.User.findById(userID);
         if (!user) {
-            return res.status(400).json({ message: "Email not found" });
+            return res.status(400).json({
+                output: 0,
+                message: "Email not found",
+                jsonResponse: null,
+            });
         }
         const verificationToken = (0, genrateVerificationCode_1.generateVerificationCode)();
         user.verificationToken = verificationToken;
-        user.verificationTokenExpires = new Date(Date.now() + 1 * 60 * 60 * 1000); // 1 hour
+        user.verificationTokenExpires = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
         yield user.save();
         // send email verification email
+        const VerifyEmailTamplateUpdated = yield (0, EmailTamplate_1.VerifyEmailTamplate)(user.name, verificationToken);
+        yield (0, emailService_1.sendEmail)(user.email, "Email Verification", VerifyEmailTamplateUpdated);
         // await sendVerificationEmail(user.email, user.name, user.verificationToken)
         return res.status(200).json({
             output: 1,

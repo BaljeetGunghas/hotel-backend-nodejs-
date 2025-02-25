@@ -66,14 +66,14 @@ export const VerifyEmailTamplate = (name: string, code: string) => {
       <h1>Verify Your Email</h1>
     </div>
     <div class="email-body">
-      <h2>Hello, ${name.toUpperCase}</h2>
-      <p>Thank you for signing up for <strong>YourApp</strong>! Please use the following code to verify your email address:</p>
+      <h2>Hello, ${name.toUpperCase()}</h2>
+      <p>Thank you for signing up for <strong>Velvet Haven</strong>! Please use the following code to verify your email address:</p>
       <div class="verification-code">${code}</div>
       <p>This code will expire in 1 Day. If you did not request this verification, you can safely ignore this email.</p>
-      <p>Best regards,<br><strong>YourApp Team</strong></p>
+      <p>Best regards,<br><strong>Velvet Haven Team</strong></p>
     </div>
     <div class="email-footer">
-      © 2024 YourApp. All rights reserved.
+      © 2024 Velvet Haven. All rights reserved.
     </div>
   </div>
 </body>
@@ -86,7 +86,7 @@ export const WelcomeEmailTamplate = (name: string) => {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Welcome to YourApp</title>
+  <title>Welcome to Velvet Haven</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -151,18 +151,18 @@ export const WelcomeEmailTamplate = (name: string) => {
 <body>
   <div class="email-container">
     <div class="email-header">
-      <h1>Welcome to YourApp!</h1>
+      <h1>Welcome to Velvet Haven!</h1>
     </div>
     <div class="email-body">
       <h2>Hello, ${name}</h2>
-      <p>We're thrilled to have you join the <strong>YourApp</strong> community. Your journey with us begins here, and we’re excited to help you get started!</p>
+      <p>We're thrilled to have you join the <strong>Velvet Haven</strong> community. Your journey with us begins here, and we’re excited to help you get started!</p>
       <p>To explore the features and benefits of your account, click the button below:</p>
-      <a href="[CTA_LINK]" class="cta-button">Get Started</a>
+      <a href="[https://velvet-haven.netlify.app/]" class="cta-button">Get Started</a>
       <p>If you have any questions or need assistance, feel free to reply to this email. Our team is always here to help you.</p>
-      <p>Best regards,<br><strong>The YourApp Team</strong></p>
+      <p>Best regards,<br><strong>The Velvet Haven Team</strong></p>
     </div>
     <div class="email-footer">
-      © 2024 YourApp. All rights reserved. | <a href="[UNSUBSCRIBE_LINK]">Unsubscribe</a>
+      © 2024 Velvet Haven. All rights reserved. | <a href="[UNSUBSCRIBE_LINK]">Unsubscribe</a>
     </div>
   </div>
 </body>
