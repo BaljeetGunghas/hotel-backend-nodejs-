@@ -51,6 +51,7 @@ const room_controller_1 = require("../Controller/room.controller");
 const uploadMulti_1 = __importDefault(require("../Helper/uploadMulti"));
 const router = ex.Router();
 router.post("/get-allroom-list", (req, res) => __awaiter(void 0, void 0, void 0, function* () { yield (0, room_controller_1.getAllRooms)(req, res); }));
+router.post("/get-host-all-room", isAuthenticated_1.isAutheticated, (req, res) => __awaiter(void 0, void 0, void 0, function* () { yield (0, room_controller_1.gethostAllRoom)(req, res); }));
 router.post("/get-specific-room-details", (req, res) => __awaiter(void 0, void 0, void 0, function* () { yield (0, room_controller_1.getSpacificRoombyRoomId)(req, res); }));
 router.post("/create-room", isAuthenticated_1.isAutheticated, (req, res) => __awaiter(void 0, void 0, void 0, function* () { yield (0, room_controller_1.createRoom)(req, res); }));
 router.put("/update-roomby-roomid", isAuthenticated_1.isAutheticated, uploadMulti_1.default, (req, res) => __awaiter(void 0, void 0, void 0, function* () { yield (0, room_controller_1.updateRoom)(req, res); }));

@@ -132,7 +132,7 @@ const login = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             .cookie("token", token, {
             httpOnly: true,
             sameSite: "strict",
-            maxAge: 24 * 60 * 60 * 1000,
+            expires: new Date(Date.now() + 24 * 60 * 60 * 1000),
         })
             .json({
             output: 1,

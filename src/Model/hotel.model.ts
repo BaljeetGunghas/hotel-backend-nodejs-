@@ -6,9 +6,9 @@ export interface IHotel {
     owner_name: string;
     description: string;
     address: string;
-    city: number;
-    state: number;
-    country: number;
+    city: number | null;
+    state: number | null;
+    country: number | null;
     postal_code: string;
     rating: number;
     rooms: number;
@@ -33,9 +33,9 @@ const hotelSchema = new mongoose.Schema<IHotelDocument>({
     owner_name: { type: String },
     description: { type: String, required: true },
     address: { type: String, required: true },
-    city: { type: Number, required: true },
-    state: { type: Number, required: true },
-    country: { type: Number, required: true },
+    city: { type: Number, default: null },
+    state: { type: Number, default: null },
+    country: { type: Number, default: null },
     postal_code: { type: String, required: true },
     rating: { type: Number, min: 0, max: 5, default: 0 },
     rooms: { type: Number, default: 0 },

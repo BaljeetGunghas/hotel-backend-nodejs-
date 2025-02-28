@@ -7,7 +7,7 @@ export const genrateToken = async (res: Response, UserDocument: IUserDocument) =
     try {
         const token = jwt.sign({ userID: UserDocument._id }, process.env.JWT_SECRET_KEY!,
             {
-                expiresIn: "1d"
+                expiresIn: "1d" // expires in 24 hours
             }
         );
         return token

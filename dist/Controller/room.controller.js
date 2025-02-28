@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.addRoomReview = exports.deleteRoom = exports.getRoomsByHotel = exports.updateRoom = exports.createRoom = exports.getSpacificRoombyRoomId = exports.getAllRooms = void 0;
+exports.addRoomReview = exports.deleteRoom = exports.getRoomsByHotel = exports.updateRoom = exports.createRoom = exports.getSpacificRoombyRoomId = exports.gethostAllRoom = exports.getAllRooms = void 0;
 const room_model_1 = require("../Model/room.model");
 const hotel_model_1 = require("../Model/hotel.model");
 const room_review_model_1 = require("../Model/room_review.model");
@@ -31,6 +31,33 @@ const getAllRooms = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
     }
 });
 exports.getAllRooms = getAllRooms;
+const gethostAllRoom = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const hostid = req.userID;
+        if (!hostid) {
+            return res.status(200).json({
+                output: 0,
+                message: "Host_id is missing",
+                jsonResponse: null,
+            });
+        }
+        const rooms = yield room_model_1.Room.find({ hostid })
+            .populate('hotel_id', " _id name");
+        return res.status(200).json({
+            output: rooms.length,
+            message: "Rooms fetched successfully",
+            jsonResponse: rooms.length > 0 ? rooms : null,
+        });
+    }
+    catch (error) {
+        return res.status(500).json({
+            output: 0,
+            message: error.message,
+            jsonResponse: null,
+        });
+    }
+});
+exports.gethostAllRoom = gethostAllRoom;
 const getSpacificRoombyRoomId = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { roomId } = req.body;
@@ -68,7 +95,8 @@ const getSpacificRoombyRoomId = (req, res) => __awaiter(void 0, void 0, void 0, 
 exports.getSpacificRoombyRoomId = getSpacificRoombyRoomId;
 const createRoom = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { hostid, hotel_id, room_number, room_type, price_per_night, max_occupancy, features, floor_number, bed_type, availability_status, view_type, smoking_allowed, description, rating, check_in_time, check_out_time, } = req.body;
+        const { hotel_id, room_number, room_type, price_per_night, max_occupancy, features, floor_number, bed_type, availability_status, view_type, smoking_allowed, description, rating, check_in_time, check_out_time, } = req.body;
+        const hostid = req.userID;
         if (!hostid || !hotel_id) {
             return res.status(400).json({
                 output: 0,

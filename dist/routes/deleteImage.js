@@ -41,21 +41,10 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 const isAuthenticated_1 = require("../middlewares/isAuthenticated");
 const ex = __importStar(require("express"));
-const hotel_controller_1 = require("../Controller/hotel.controller");
-const uploadMulti_1 = __importDefault(require("../Helper/uploadMulti"));
+const deleteImage_controller_1 = require("../Controller/deleteImage.controller");
 const router = ex.Router();
-router.post("/get-hotel-list", (req, res) => __awaiter(void 0, void 0, void 0, function* () { yield (0, hotel_controller_1.getHotelsList)(req, res); }));
-router.post("/get-specific-hotel", (req, res) => __awaiter(void 0, void 0, void 0, function* () { yield (0, hotel_controller_1.getspacificHotelbyHotelId)(req, res); }));
-router.post("/create-hotel", isAuthenticated_1.isAutheticated, (req, res) => __awaiter(void 0, void 0, void 0, function* () { yield (0, hotel_controller_1.createHotel)(req, res); }));
-router.put("/update-hotel", isAuthenticated_1.isAutheticated, uploadMulti_1.default, (req, res) => __awaiter(void 0, void 0, void 0, function* () { yield (0, hotel_controller_1.updatespacificHotelbyHotelId)(req, res); }));
-router.post("/get-host-hotelList", isAuthenticated_1.isAutheticated, (req, res) => __awaiter(void 0, void 0, void 0, function* () { yield (0, hotel_controller_1.gethostHotelList)(req, res); }));
-router.post("/delete-hotel", isAuthenticated_1.isAutheticated, (req, res) => __awaiter(void 0, void 0, void 0, function* () { yield (0, hotel_controller_1.deletespacificHotelbyHotelId)(req, res); }));
-router.post("/get-specific-hotel-details", (req, res) => __awaiter(void 0, void 0, void 0, function* () { yield (0, hotel_controller_1.getSpecificHotelDetailsByHotelId)(req, res); }));
-router.post("/add-hotel-review", (req, res) => __awaiter(void 0, void 0, void 0, function* () { yield (0, hotel_controller_1.addhotelReview)(req, res); }));
+router.post('/', isAuthenticated_1.isAutheticated, (req, res) => __awaiter(void 0, void 0, void 0, function* () { yield (0, deleteImage_controller_1.deleteImage)(req, res); }));
 exports.default = router;
