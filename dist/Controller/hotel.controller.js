@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.addhotelReview = exports.deletespacificHotelbyHotelId = exports.updatespacificHotelbyHotelId = exports.createHotel = exports.getSpecificHotelDetailsByHotelId = exports.getspacificHotelbyHotelId = exports.getHotelsList = void 0;
+exports.addhotelReview = exports.deletespacificHotelbyHotelId = exports.gethostHotelList = exports.updatespacificHotelbyHotelId = exports.createHotel = exports.getSpecificHotelDetailsByHotelId = exports.getspacificHotelbyHotelId = exports.getHotelsList = void 0;
 const hotel_model_1 = require("../Model/hotel.model");
 const room_model_1 = require("../Model/room.model");
 const hotel_review_1 = require("../Model/hotel_review");
@@ -20,7 +20,7 @@ const getHotelsList = (req, res) => __awaiter(void 0, void 0, void 0, function* 
         res.status(200).json({
             output: 1,
             message: "Hotels fetched successfully",
-            json: hotels.length > 0 ? hotels : null,
+            jsonResponse: hotels.length > 0 ? hotels : null,
         });
     }
     catch (error) {
@@ -35,7 +35,7 @@ const getspacificHotelbyHotelId = (req, res) => __awaiter(void 0, void 0, void 0
     try {
         const { hotelId } = req.body;
         if (!hotelId) {
-            return res.status(400).json({
+            return res.status(200).json({
                 output: 0,
                 message: "Hotel ID is required",
                 jsonResponse: null
@@ -52,7 +52,7 @@ const getspacificHotelbyHotelId = (req, res) => __awaiter(void 0, void 0, void 0
         return res.status(200).json({
             output: 1,
             message: "Hotel fetched successfully",
-            json: hotel,
+            jsonResponse: hotel,
         });
     }
     catch (error) {
@@ -67,7 +67,7 @@ const getSpecificHotelDetailsByHotelId = (req, res) => __awaiter(void 0, void 0,
     try {
         const { hotelId } = req.body;
         if (!hotelId) {
-            return res.status(400).json({
+            return res.status(200).json({
                 output: 0,
                 message: "Hotel ID is required",
                 jsonResponse: null,
@@ -108,10 +108,18 @@ const getSpecificHotelDetailsByHotelId = (req, res) => __awaiter(void 0, void 0,
 exports.getSpecificHotelDetailsByHotelId = getSpecificHotelDetailsByHotelId;
 const createHotel = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { hostid, name, owner_name, description, address, city, state, country, postal_code, policies, cancellation_policy, contact_number, email, status, } = req.body;
+        const { name, owner_name, description, address, city, state, country, postal_code, policies, cancellation_policy, contact_number, email, } = req.body;
+        const hostid = req.userID;
         const hotelexist = yield hotel_model_1.Hotel.findOne({ contact_number: contact_number });
+        if (!hostid) {
+            return res.status(200).json({
+                output: 0,
+                message: "Host ID is required",
+                jsonResponse: null
+            });
+        }
         if (hotelexist) {
-            return res.status(400).json({
+            return res.status(200).json({
                 output: 0,
                 message: "Hotel already exist with this contact number",
                 jsonResponse: null
@@ -132,7 +140,6 @@ const createHotel = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
             cancellation_policy,
             contact_number,
             email,
-            status,
         };
         const filteredHotelData = Object.fromEntries(Object.entries(hotelData).filter(([_, value]) => value !== undefined && value !== null));
         const hotel = new hotel_model_1.Hotel(filteredHotelData);
@@ -141,7 +148,7 @@ const createHotel = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
         res.status(201).json({
             output: 1,
             message: "Hotel created successfully",
-            json: hotel,
+            jsonResponse: hotel,
         });
     }
     catch (error) {
@@ -158,7 +165,7 @@ const updatespacificHotelbyHotelId = (req, res) => __awaiter(void 0, void 0, voi
     try {
         const { hotelId, name, owner_name, description, address, city, state, country, postal_code, policies, cancellation_policy, contact_number, email, status } = req.body;
         if (!hotelId) {
-            return res.status(400).json({
+            return res.status(200).json({
                 output: 0,
                 message: "Hotel ID is required",
                 jsonResponse: null
@@ -218,13 +225,39 @@ const updatespacificHotelbyHotelId = (req, res) => __awaiter(void 0, void 0, voi
     }
 });
 exports.updatespacificHotelbyHotelId = updatespacificHotelbyHotelId;
+const gethostHotelList = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const hostId = req.userID;
+        const hotels = yield hotel_model_1.Hotel.find({ hostid: hostId });
+        res.status(200).json({
+            output: hotels.length,
+            message: "Hotels fetched successfully",
+            jsonResponse: hotels.length > 0 ? hotels : null,
+        });
+    }
+    catch (error) {
+        res.status(500).json({
+            output: 0,
+            message: error.message,
+        });
+    }
+});
+exports.gethostHotelList = gethostHotelList;
 const deletespacificHotelbyHotelId = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { hotelId } = req.body;
+        const userid = req.userID;
         if (!hotelId) {
-            return res.status(400).json({
+            return res.status(200).json({
                 output: 0,
                 message: "Hotel ID is required",
+                jsonResponse: null
+            });
+        }
+        if (!userid) {
+            return res.status(200).json({
+                output: 0,
+                message: "User ID is required",
                 jsonResponse: null
             });
         }
@@ -233,6 +266,13 @@ const deletespacificHotelbyHotelId = (req, res) => __awaiter(void 0, void 0, voi
             return res.status(404).json({
                 output: 0,
                 message: "Hotel not found",
+                jsonResponse: null
+            });
+        }
+        if (String(hotel.hostid) !== userid) {
+            return res.status(403).json({
+                output: 0,
+                message: "You are not authorized to delete this hotel",
                 jsonResponse: null
             });
         }
@@ -257,7 +297,7 @@ const addhotelReview = (req, res) => __awaiter(void 0, void 0, void 0, function*
     try {
         const { hotelId, userId, rating, comment } = req.body;
         if (!hotelId || !userId || !rating || !comment) {
-            return res.status(400).json({
+            return res.status(200).json({
                 output: 0,
                 message: "Hotel ID, User ID, Rating, and Comment are required",
                 jsonResponse: null

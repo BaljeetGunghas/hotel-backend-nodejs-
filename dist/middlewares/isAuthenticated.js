@@ -16,12 +16,12 @@ const isAutheticated = (req, res, next) => __awaiter(void 0, void 0, void 0, fun
     try {
         const token = req.cookies.token || ((_a = req.headers.authorization) === null || _a === void 0 ? void 0 : _a.split(' ')[1]);
         if (!token) {
-            res.status(401).json({ message: "Unauthorized" });
+            res.status(200).json({ message: "Unauthorized", output: -401, jsonResponse: null });
             return;
         }
         const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
         if (!decoded) {
-            res.status(401).json({ message: "Unauthorized" });
+            res.status(200).json({ message: "Unauthorized", output: -401, jsonResponse: null });
             return;
         }
         ;
@@ -29,7 +29,7 @@ const isAutheticated = (req, res, next) => __awaiter(void 0, void 0, void 0, fun
         next();
     }
     catch (error) {
-        res.status(401).send({ message: 'Please authenticate.' });
+        res.status(200).json({ message: "Unauthorized", output: -401, jsonResponse: null });
     }
 });
 exports.isAutheticated = isAutheticated;

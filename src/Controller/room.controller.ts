@@ -22,6 +22,36 @@ export const getAllRooms = async (req: Request, res: Response) => {
     }
 };
 
+export const gethostAllRoom = async (req: Request, res: Response) => {
+    try {
+        const hostid = req.userID;
+
+        if (!hostid) {
+            return res.status(200).json({
+                output: 0,
+                message: "Host_id is missing",
+                jsonResponse: null,
+            });
+        }
+        const rooms = await Room.find({ hostid })
+            .populate('hotel_id', " _id name");
+
+        return res.status(200).json({
+            output: rooms.length,
+            message: "Rooms fetched successfully",
+            jsonResponse: rooms.length > 0 ? rooms : null,
+        })
+
+
+    } catch (error) {
+        return res.status(500).json({
+            output: 0,
+            message: (error as Error).message,
+            jsonResponse: null,
+        });
+    }
+}
+
 export const getSpacificRoombyRoomId = async (req: Request, res: Response) => {
     try {
         const { roomId } = req.body;
@@ -67,7 +97,6 @@ export const getSpacificRoombyRoomId = async (req: Request, res: Response) => {
 export const createRoom = async (req: Request, res: Response) => {
     try {
         const {
-            hostid,
             hotel_id,
             room_number,
             room_type,
@@ -84,6 +113,9 @@ export const createRoom = async (req: Request, res: Response) => {
             check_in_time,
             check_out_time,
         } = req.body;
+
+        const hostid = req.userID;
+
         if (!hostid || !hotel_id) {
             return res.status(400).json({
                 output: 0,

@@ -15,20 +15,20 @@ export const isAutheticated = async (req: Request, res: Response, next: NextFunc
         const token = req.cookies.token || req.headers.authorization?.split(' ')[1];
 
         if (!token) {
-            res.status(401).json({ message: "Unauthorized" });
+            res.status(200).json({ message: "Unauthorized", output: -401, jsonResponse: null });
             return;
         }
 
         const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY) as any;
         if (!decoded) {
-            res.status(401).json({ message: "Unauthorized" });
+            res.status(200).json({ message: "Unauthorized", output: -401, jsonResponse: null });
             return;
         };
         req.userID = decoded.userID;
 
         next();
     } catch (error) {
-        res.status(401).send({ message: 'Please authenticate.' });
+        res.status(200).json({ message: "Unauthorized", output: -401, jsonResponse: null });
     }
 
 }

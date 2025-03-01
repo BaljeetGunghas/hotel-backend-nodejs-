@@ -14,7 +14,7 @@ const jwt = require('jsonwebtoken');
 const genrateToken = (res, UserDocument) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const token = jwt.sign({ userID: UserDocument._id }, process.env.JWT_SECRET_KEY, {
-            expiresIn: "1d"
+            expiresIn: "1d" // expires in 24 hours
         });
         return token;
     }

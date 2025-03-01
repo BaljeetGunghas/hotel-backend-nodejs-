@@ -12,7 +12,7 @@ export const getHotelsList = async (req: Request, res: Response) => {
         res.status(200).json({
             output: 1,
             message: "Hotels fetched successfully",
-            json: hotels.length > 0 ? hotels : null,
+            jsonResponse: hotels.length > 0 ? hotels : null,
         });
     } catch (error) {
         res.status(500).json({
@@ -27,7 +27,7 @@ export const getspacificHotelbyHotelId = async (req: Request, res: Response) => 
         const { hotelId } = req.body;
 
         if (!hotelId) {
-            return res.status(400).json({
+            return res.status(200).json({
                 output: 0,
                 message: "Hotel ID is required",
                 jsonResponse: null
@@ -44,7 +44,7 @@ export const getspacificHotelbyHotelId = async (req: Request, res: Response) => 
         return res.status(200).json({
             output: 1,
             message: "Hotel fetched successfully",
-            json: hotel,
+            jsonResponse: hotel,
         });
     } catch (error) {
         return res.status(500).json({
@@ -59,7 +59,7 @@ export const getSpecificHotelDetailsByHotelId = async (req: Request, res: Respon
         const { hotelId } = req.body;
 
         if (!hotelId) {
-            return res.status(400).json({
+            return res.status(200).json({
                 output: 0,
                 message: "Hotel ID is required",
                 jsonResponse: null,
@@ -113,12 +113,20 @@ export const getSpecificHotelDetailsByHotelId = async (req: Request, res: Respon
 
 export const createHotel = async (req: Request, res: Response) => {
     try {
-        const { hostid, name, owner_name, description, address, city, state, country, postal_code, policies, cancellation_policy, contact_number, email, status, } = req.body;
-
+        const { name, owner_name, description, address, city, state, country, postal_code, policies, cancellation_policy, contact_number, email, } = req.body;
+        const hostid = req.userID;
         const hotelexist = await Hotel.findOne({ contact_number: contact_number });
 
+        if (!hostid) {
+            return res.status(200).json({
+                output: 0,
+                message: "Host ID is required",
+                jsonResponse: null
+            });
+        }
+
         if (hotelexist) {
-            return res.status(400).json({
+            return res.status(200).json({
                 output: 0,
                 message: "Hotel already exist with this contact number",
                 jsonResponse: null
@@ -140,7 +148,6 @@ export const createHotel = async (req: Request, res: Response) => {
             cancellation_policy,
             contact_number,
             email,
-            status,
         };
 
         const filteredHotelData = Object.fromEntries(
@@ -156,7 +163,7 @@ export const createHotel = async (req: Request, res: Response) => {
         res.status(201).json({
             output: 1,
             message: "Hotel created successfully",
-            json: hotel,
+            jsonResponse: hotel,
         });
     } catch (error) {
         res.status(500).json({
@@ -172,7 +179,7 @@ export const updatespacificHotelbyHotelId = async (req: Request, res: Response) 
         const { hotelId, name, owner_name, description, address, city, state, country, postal_code, policies, cancellation_policy, contact_number, email, status } = req.body;
 
         if (!hotelId) {
-            return res.status(400).json({
+            return res.status(200).json({
                 output: 0,
                 message: "Hotel ID is required",
                 jsonResponse: null
@@ -242,13 +249,41 @@ export const updatespacificHotelbyHotelId = async (req: Request, res: Response) 
     }
 }
 
+export const gethostHotelList = async (req: Request, res: Response) => {
+    try {
+
+        const hostId = req.userID;
+        const hotels = await Hotel.find({ hostid: hostId });
+        res.status(200).json({
+            output: hotels.length,
+            message: "Hotels fetched successfully",
+            jsonResponse: hotels.length > 0 ? hotels : null,
+        });
+    } catch (error) {
+        res.status(500).json({
+            output: 0,
+            message: (error as Error).message,
+        });
+    }
+};
+
+
 export const deletespacificHotelbyHotelId = async (req: Request, res: Response) => {
     try {
         const { hotelId } = req.body;
+        const userid = req.userID;
+
         if (!hotelId) {
-            return res.status(400).json({
+            return res.status(200).json({
                 output: 0,
                 message: "Hotel ID is required",
+                jsonResponse: null
+            });
+        }
+        if (!userid) {
+            return res.status(200).json({
+                output: 0,
+                message: "User ID is required",
                 jsonResponse: null
             });
         }
@@ -257,6 +292,13 @@ export const deletespacificHotelbyHotelId = async (req: Request, res: Response) 
             return res.status(404).json({
                 output: 0,
                 message: "Hotel not found",
+                jsonResponse: null
+            });
+        }
+        if (String(hotel.hostid) !== userid) {
+            return res.status(403).json({
+                output: 0,
+                message: "You are not authorized to delete this hotel",
                 jsonResponse: null
             });
         }
@@ -281,7 +323,7 @@ export const addhotelReview = async (req: Request, res: Response) => {
     try {
         const { hotelId, userId, rating, comment } = req.body;
         if (!hotelId || !userId || !rating || !comment) {
-            return res.status(400).json({
+            return res.status(200).json({
                 output: 0,
                 message: "Hotel ID, User ID, Rating, and Comment are required",
                 jsonResponse: null
