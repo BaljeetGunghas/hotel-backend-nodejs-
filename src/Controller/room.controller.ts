@@ -52,7 +52,7 @@ export const gethostAllRoom = async (req: Request, res: Response) => {
     }
 }
 
-export const getSpacificRoombyRoomId = async (req: Request, res: Response) => {
+export const getSpacificCompleteRoombyRoomId = async (req: Request, res: Response) => {
     try {
         const { roomId } = req.body;
 
@@ -84,6 +84,39 @@ export const getSpacificRoombyRoomId = async (req: Request, res: Response) => {
                 roomReviews: roomReviews.length > 0 ? roomReviews : null,
                 hotelDetails: hotel || null,
             },
+        });
+    } catch (error) {
+        return res.status(500).json({
+            output: 0,
+            message: (error as Error).message,
+            jsonResponse: null,
+        });
+    }
+};
+export const getSpacificRoombyRoomId = async (req: Request, res: Response) => {
+    try {
+        const { roomId } = req.body;
+
+        if (!roomId) {
+            return res.status(400).json({
+                output: 0,
+                message: "Room ID is required",
+                jsonResponse: null,
+            });
+        }
+
+        const room = await Room.findById({ _id: roomId }, { __v: 0, reviews: 0 });
+        if (!room) {
+            return res.status(404).json({
+                output: 0,
+                message: "Room not found",
+                jsonResponse: null,
+            });
+        }
+        return res.status(200).json({
+            output: 1,
+            message: "Room fetched successfully",
+            jsonResponse: room,
         });
     } catch (error) {
         return res.status(500).json({
@@ -136,7 +169,7 @@ export const createRoom = async (req: Request, res: Response) => {
         });
 
         if (isRoomAlreadyCrated) {
-            return res.status(400).json({
+            return res.status(200).json({
                 output: 0,
                 message: "Room already created within this hotel with this room number",
                 jsonResponse: null,
@@ -154,7 +187,7 @@ export const createRoom = async (req: Request, res: Response) => {
             floor_number,
             bed_type,
             availability_status,
-            view_type,
+            view_type: view_type ? JSON.parse(view_type) : null,
             smoking_allowed,
             description,
             rating,
@@ -227,6 +260,7 @@ export const updateRoom = async (req: Request, res: Response) => {
             });
         }
 
+        const parsedViewType = typeof view_type === "string" ? JSON.parse(view_type) : view_type;
 
         const updatedRoom = {
             room_number: room_number || room.room_number,
@@ -237,12 +271,12 @@ export const updateRoom = async (req: Request, res: Response) => {
             floor_number: floor_number || room.floor_number,
             bed_type: bed_type || room.bed_type,
             availability_status: availability_status || room.availability_status,
-            view_type: view_type || room.view_type,
             smoking_allowed: smoking_allowed || room.smoking_allowed,
             description: description || room.description,
             check_in_time: check_in_time || room.check_in_time,
             check_out_time: check_out_time || room.check_out_time,
             room_images: room.room_images,
+            view_type: Array.isArray(parsedViewType) ? parsedViewType : room.view_type,
         };
 
         const currentImages = room.room_images || [];
