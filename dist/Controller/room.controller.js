@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.addRoomReview = exports.deleteRoom = exports.getRoomsByHotel = exports.updateRoom = exports.createRoom = exports.getSpacificRoombyRoomId = exports.gethostAllRoom = exports.getAllRooms = void 0;
+exports.addRoomReview = exports.deleteRoom = exports.getRoomsByHotel = exports.updateRoom = exports.createRoom = exports.getSpacificRoombyRoomId = exports.getSpacificCompleteRoombyRoomId = exports.gethostAllRoom = exports.getAllRooms = void 0;
 const room_model_1 = require("../Model/room.model");
 const hotel_model_1 = require("../Model/hotel.model");
 const room_review_model_1 = require("../Model/room_review.model");
@@ -58,7 +58,7 @@ const gethostAllRoom = (req, res) => __awaiter(void 0, void 0, void 0, function*
     }
 });
 exports.gethostAllRoom = gethostAllRoom;
-const getSpacificRoombyRoomId = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const getSpacificCompleteRoombyRoomId = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { roomId } = req.body;
         if (!roomId) {
@@ -82,6 +82,39 @@ const getSpacificRoombyRoomId = (req, res) => __awaiter(void 0, void 0, void 0, 
             output: 1,
             message: "Room fetched successfully",
             jsonResponse: Object.assign(Object.assign({}, room.toObject()), { roomReviews: roomReviews.length > 0 ? roomReviews : null, hotelDetails: hotel || null }),
+        });
+    }
+    catch (error) {
+        return res.status(500).json({
+            output: 0,
+            message: error.message,
+            jsonResponse: null,
+        });
+    }
+});
+exports.getSpacificCompleteRoombyRoomId = getSpacificCompleteRoombyRoomId;
+const getSpacificRoombyRoomId = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { roomId } = req.body;
+        if (!roomId) {
+            return res.status(400).json({
+                output: 0,
+                message: "Room ID is required",
+                jsonResponse: null,
+            });
+        }
+        const room = yield room_model_1.Room.findById({ _id: roomId }, { __v: 0, reviews: 0 });
+        if (!room) {
+            return res.status(404).json({
+                output: 0,
+                message: "Room not found",
+                jsonResponse: null,
+            });
+        }
+        return res.status(200).json({
+            output: 1,
+            message: "Room fetched successfully",
+            jsonResponse: room,
         });
     }
     catch (error) {
@@ -116,7 +149,7 @@ const createRoom = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
             hotel_id: hotel_id,
         });
         if (isRoomAlreadyCrated) {
-            return res.status(400).json({
+            return res.status(200).json({
                 output: 0,
                 message: "Room already created within this hotel with this room number",
                 jsonResponse: null,
@@ -133,7 +166,7 @@ const createRoom = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
             floor_number,
             bed_type,
             availability_status,
-            view_type,
+            view_type: view_type ? JSON.parse(view_type) : null,
             smoking_allowed,
             description,
             rating,
@@ -187,6 +220,7 @@ const updateRoom = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
                 jsonResponse: null
             });
         }
+        const parsedViewType = typeof view_type === "string" ? JSON.parse(view_type) : view_type;
         const updatedRoom = {
             room_number: room_number || room.room_number,
             room_type: room_type || room.room_type,
@@ -196,12 +230,12 @@ const updateRoom = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
             floor_number: floor_number || room.floor_number,
             bed_type: bed_type || room.bed_type,
             availability_status: availability_status || room.availability_status,
-            view_type: view_type || room.view_type,
             smoking_allowed: smoking_allowed || room.smoking_allowed,
             description: description || room.description,
             check_in_time: check_in_time || room.check_in_time,
             check_out_time: check_out_time || room.check_out_time,
             room_images: room.room_images,
+            view_type: Array.isArray(parsedViewType) ? parsedViewType : room.view_type,
         };
         const currentImages = room.room_images || [];
         const newImages = (_b = (_a = req === null || req === void 0 ? void 0 : req.files) === null || _a === void 0 ? void 0 : _a.map((file) => { var _a; return ((_a = file === null || file === void 0 ? void 0 : file.path) === null || _a === void 0 ? void 0 : _a.split("image/upload/")[1]) || null; })) !== null && _b !== void 0 ? _b : [];

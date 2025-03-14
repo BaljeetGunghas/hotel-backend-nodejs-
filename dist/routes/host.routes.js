@@ -47,4 +47,5 @@ const ex = __importStar(require("express"));
 const host_controller_1 = require("../Controller/host.controller");
 const router = ex.Router();
 router.post('/host-dashboard', isAuthenticated_1.isAutheticated, (req, res) => __awaiter(void 0, void 0, void 0, function* () { yield (0, host_controller_1.hostDashboard)(req, res); }));
+router.post('/getHostHotelName', isAuthenticated_1.isAutheticated, (req, res) => __awaiter(void 0, void 0, void 0, function* () { yield (0, host_controller_1.getHostHotelName)(req, res); }));
 exports.default = router;
