@@ -7,8 +7,8 @@ export const hostDashboard = async (req: Request, res: Response) => {
     try {
         const { hostId } = req.body;
         //hotel count with this host id 
-        const totalHotels = await Hotel.find({ hostid: hostId });
-        const hotelCount = totalHotels.length;
+        const totalHotels = await Hotel.find({ hostid: hostId }).limit(2);
+        const hotelCount = await Hotel.countDocuments({ hostid: hostId });
 
         // Calculate average rating of hotels
         const ratingArr = totalHotels.map((h: IHotel) => h.rating);
@@ -37,6 +37,42 @@ export const hostDashboard = async (req: Request, res: Response) => {
         res.status(500).json({
             output: 0,
             message: (error as Error).message,
+        });
+    }
+}
+
+export const getHostHotelName = async (req: Request, res: Response) => {
+    try {
+        const hostid = req.userID;
+        if (!hostid) {
+            return res.status(200).json({
+                output: 0,
+                message: "Host_id is missing",
+                jsonResponse: null,
+            });
+        }
+        const hotelNameData = await Hotel.find({ hostid }).select('_id, name');
+        if (hotelNameData.length > 0) {
+
+            return res.status(200).json({
+                output: 1,
+                message: 'ok',
+                jsonResponse: hotelNameData
+            })
+        } else {
+            return res.status(200).json({
+                output: 0,
+                message: 'No hotels found',
+                jsonResponse: null
+            })
+        }
+
+
+    } catch (error) {
+        return res.status(500).json({
+            output: 0,
+            message: (error as Error).message,
+            jsonResponse: null,
         });
     }
 }

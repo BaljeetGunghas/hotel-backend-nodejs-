@@ -10,8 +10,8 @@ export interface IRoom {
     features: Object;
     floor_number: number;
     bed_type: string;
-    availability_status: boolean;
-    view_type: string;
+    availability_status: string;
+    view_type: string[] | null;
     smoking_allowed: boolean;
     description: string;
     rating: number | null;
@@ -30,14 +30,14 @@ const roomSchema = new mongoose.Schema<IRoomDocument>({
     hostid: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     hotel_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Hotel', required: true },
     room_number: { type: Number, required: true },
-    room_type: { type: String, enum: ['Single', 'Double', 'Suite', 'Family', 'Deluxe'], default: 'Single' },
+    room_type: { type: String, enum: ['single', 'double', 'suite', 'family', 'deluxe'], default: 'single' },
     price_per_night: { type: Number, required: true },  //price per night
-    max_occupancy: { type: Number },    //maximum occupancy
-    features: { type: Object }, // JSON object for features
-    floor_number: { type: Number },
-    bed_type: { type: String, enum: ['Single', 'Double', 'Queen', 'King'] },
-    availability_status: { type: Boolean, default: true },
-    view_type: { type: String },    //city, sea, mountain, garden, pool
+    max_occupancy: { type: Number, default: 3 },    //maximum occupancy
+    features: { type: Object, default: null }, // JSON object for features
+    floor_number: { type: Number, required: true },
+    bed_type: { type: String, enum: ['single', 'double', 'queen', 'king'] },
+    availability_status: { type: String, enum: ['available', 'occupied', 'under_maintenance'], default: 'available' },
+    view_type: { type: [String], default: null },    //city, sea, mountain, garden, pool
     smoking_allowed: { type: Boolean, default: false },     //smoking allowed or not
     description: { type: String },
     rating: { type: Number, min: 0, max: 5, default: 0 },
