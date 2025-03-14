@@ -9,14 +9,14 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.hostDashboard = void 0;
+exports.getHostHotelName = exports.hostDashboard = void 0;
 const hotel_model_1 = require("../Model/hotel.model");
 const hostDashboard = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { hostId } = req.body;
         //hotel count with this host id 
-        const totalHotels = yield hotel_model_1.Hotel.find({ hostid: hostId });
-        const hotelCount = totalHotels.length;
+        const totalHotels = yield hotel_model_1.Hotel.find({ hostid: hostId }).limit(2);
+        const hotelCount = yield hotel_model_1.Hotel.countDocuments({ hostid: hostId });
         // Calculate average rating of hotels
         const ratingArr = totalHotels.map((h) => h.rating);
         // Calculate average rating
@@ -41,3 +41,38 @@ const hostDashboard = (req, res) => __awaiter(void 0, void 0, void 0, function* 
     }
 });
 exports.hostDashboard = hostDashboard;
+const getHostHotelName = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const hostid = req.userID;
+        if (!hostid) {
+            return res.status(200).json({
+                output: 0,
+                message: "Host_id is missing",
+                jsonResponse: null,
+            });
+        }
+        const hotelNameData = yield hotel_model_1.Hotel.find({ hostid }).select('_id, name');
+        if (hotelNameData.length > 0) {
+            return res.status(200).json({
+                output: 1,
+                message: 'ok',
+                jsonResponse: hotelNameData
+            });
+        }
+        else {
+            return res.status(200).json({
+                output: 0,
+                message: 'No hotels found',
+                jsonResponse: null
+            });
+        }
+    }
+    catch (error) {
+        return res.status(500).json({
+            output: 0,
+            message: error.message,
+            jsonResponse: null,
+        });
+    }
+});
+exports.getHostHotelName = getHostHotelName;
