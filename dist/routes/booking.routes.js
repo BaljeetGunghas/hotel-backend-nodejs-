@@ -32,22 +32,20 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Booking = void 0;
-const mongoose_1 = __importStar(require("mongoose"));
-const bookingSchema = new mongoose_1.Schema({
-    customer_id: { type: mongoose_1.Schema.Types.ObjectId, ref: "User", required: true, index: true },
-    room_id: { type: mongoose_1.Schema.Types.ObjectId, ref: "Room", required: true, index: true },
-    hotel_id: { type: mongoose_1.Schema.Types.ObjectId, ref: "Hotel", required: true, index: true },
-    check_in_date: { type: Date, required: true },
-    check_out_date: { type: Date, required: true },
-    total_guests: { type: Number, required: true, min: 1 },
-    total_price: { type: Number, required: true, min: 0 },
-    payment_status: { type: String, enum: ["pending", "paid", "failed"], default: "paid" },
-    booking_status: { type: String, enum: ["pending", "confirmed", "cancelled", "completed"], default: "confirmed" },
-    special_requests: { type: String, default: "" },
-    cancellation_reason: { type: String, default: "" },
-}, { timestamps: true });
-// ✅ Add compound unique index to prevent duplicate confirmed bookings
-bookingSchema.index({ room_id: 1, check_in_date: 1, check_out_date: 1, booking_status: 1 }, { unique: true, partialFilterExpression: { booking_status: "confirmed" } });
-exports.Booking = mongoose_1.default.model("Booking", bookingSchema);
+const isAuthenticated_1 = require("../middlewares/isAuthenticated");
+const ex = __importStar(require("express"));
+const booking_controller_1 = require("../Controller/booking.controller");
+const router = ex.Router();
+router.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () { res.json({ message: 'get req' }); }));
+router.post('/create-booking', isAuthenticated_1.isAutheticated, (req, res) => __awaiter(void 0, void 0, void 0, function* () { yield (0, booking_controller_1.createBooking)(req, res); }));
+exports.default = router;

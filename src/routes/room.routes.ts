@@ -1,11 +1,12 @@
 import { isAutheticated } from '../middlewares/isAuthenticated';
 import * as ex from "express";
 import { Request, Response } from "express";
-import { addRoomReview, createRoom, deleteRoom, getAllRooms, gethostAllRoom, getRoomsByHotel, getSpacificCompleteRoombyRoomId, getSpacificRoombyRoomId, updateRoom } from '../Controller/room.controller';
+import { addRoomReview, createRoom, deleteRoom, getAllRooms, gethostAllRoom, getRoomsByHotel, getSpacificCompleteRoombyRoomId, getSpacificRoombyRoomId,  searchRooms, updateRoom } from '../Controller/room.controller';
 import uploadMulti from '../Helper/uploadMulti';
 
 const router = ex.Router();
 router.post("/get-allroom-list", async (req: Request, res: Response) => { await getAllRooms(req, res) });
+router.get("/search-room", async (req: Request, res: Response) => { await searchRooms(req, res) });
 router.post("/get-host-all-room", isAutheticated, async (req: Request, res: Response) => { await gethostAllRoom(req, res) })
 router.post("/get-specific-room-fulldetails", async (req: Request, res: Response) => { await getSpacificCompleteRoombyRoomId(req, res) });
 router.post("/get-specific-room-details", async (req: Request, res: Response) => { await getSpacificRoombyRoomId(req, res) });

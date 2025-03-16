@@ -9,10 +9,12 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.addRoomReview = exports.deleteRoom = exports.getRoomsByHotel = exports.updateRoom = exports.createRoom = exports.getSpacificRoombyRoomId = exports.getSpacificCompleteRoombyRoomId = exports.gethostAllRoom = exports.getAllRooms = void 0;
+exports.addRoomReview = exports.deleteRoom = exports.getRoomsByHotel = exports.updateRoom = exports.createRoom = exports.getSpacificRoombyRoomId = exports.getSpacificCompleteRoombyRoomId = exports.gethostAllRoom = exports.searchRooms = exports.getAllRooms = void 0;
 const room_model_1 = require("../Model/room.model");
 const hotel_model_1 = require("../Model/hotel.model");
 const room_review_model_1 = require("../Model/room_review.model");
+const booking_model_1 = require("../Model/booking.model");
+const getHotelByCity_1 = require("../Helper/getHotelByCity");
 const getAllRooms = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const rooms = yield room_model_1.Room.find();
@@ -31,6 +33,86 @@ const getAllRooms = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
     }
 });
 exports.getAllRooms = getAllRooms;
+const searchRooms = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        let { city, check_in_date, check_out_date, adults, children, minPrice, maxPrice, amenities, rating, page } = req.query;
+        if (!city || !check_in_date || !check_out_date) {
+            return res.status(400).json({ message: "City, check-in, and check-out dates are required" });
+        }
+        const checkInDate = new Date(check_in_date);
+        const checkOutDate = new Date(check_out_date);
+        if (isNaN(checkInDate.getTime()) || isNaN(checkOutDate.getTime()) || checkInDate >= checkOutDate) {
+            return res.status(400).json({ message: "Invalid check-in or check-out date" });
+        }
+        const parsedPage = parseInt(page) || 1;
+        const parsedLimit = 3;
+        // Get booked room IDs in the given date range
+        const bookedRooms = yield booking_model_1.Booking.find({
+            check_in_date: { $lt: checkOutDate },
+            check_out_date: { $gt: checkInDate },
+            booking_status: { $in: ["pending", "confirmed"] }
+        }).distinct("room_id");
+        // Get properties in the specified city
+        const propertyIDs = yield (0, getHotelByCity_1.getHotelByCity)(city);
+        if (!propertyIDs.length) {
+            return res.status(404).json({ message: "No hotels found in the selected city." });
+        }
+        // Construct query for available rooms
+        let query = {
+            hotel_id: { $in: propertyIDs },
+            _id: { $nin: bookedRooms },
+        };
+        // Additional filters
+        const totalGuests = (parseInt(adults) || 0) + (parseInt(children) || 0);
+        if (totalGuests > 0)
+            query.max_occupancy = { $gte: totalGuests };
+        if (Number(minPrice) > 0 && Number(maxPrice) > 0) {
+            query.price_per_night = {
+                $gte: Number(minPrice),
+                $lte: Number(maxPrice)
+            };
+        }
+        if (amenities)
+            query.amenities = { $all: amenities };
+        if (rating)
+            query.rating = { $gte: parseFloat(rating) };
+        // Fetch available rooms with pagination
+        const availableRooms = yield room_model_1.Room.find(query)
+            .select("room_images _id amenities room_type price_per_night max_occupancy bed_type rating check_in_time check_out_time")
+            .skip((parsedPage - 1) * parsedLimit)
+            .limit(parsedLimit);
+        const formattedRooms = availableRooms.map(room => {
+            var _a;
+            return ({
+                amenities: room.amenities,
+                image: ((_a = room.room_images) === null || _a === void 0 ? void 0 : _a.length) ? room.room_images[0] : null,
+                _id: room._id,
+                room_type: room.room_type,
+                price_per_night: room.price_per_night,
+                max_occupancy: room.max_occupancy,
+                bed_type: room.bed_type,
+                rating: room.rating,
+                check_in_time: room.check_in_time,
+                check_out_time: room.check_out_time
+            });
+        });
+        const totalRooms = yield room_model_1.Room.countDocuments(query);
+        res.status(200).json({
+            output: availableRooms === null || availableRooms === void 0 ? void 0 : availableRooms.length,
+            message: 'ok',
+            jsonResponse: {
+                rooms: formattedRooms,
+                totalPages: Math.ceil(totalRooms / parsedLimit),
+                currentPage: parsedPage
+            }
+        });
+    }
+    catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Internal Server Error" });
+    }
+});
+exports.searchRooms = searchRooms;
 const gethostAllRoom = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const hostid = req.userID;
@@ -103,7 +185,7 @@ const getSpacificRoombyRoomId = (req, res) => __awaiter(void 0, void 0, void 0, 
                 jsonResponse: null,
             });
         }
-        const room = yield room_model_1.Room.findById({ _id: roomId }, { __v: 0, reviews: 0 });
+        const room = yield room_model_1.Room.findById({ _id: roomId }, { __v: 0, reviews: 0 }).populate('hotel_id', " _id name");
         if (!room) {
             return res.status(404).json({
                 output: 0,
@@ -128,7 +210,7 @@ const getSpacificRoombyRoomId = (req, res) => __awaiter(void 0, void 0, void 0, 
 exports.getSpacificRoombyRoomId = getSpacificRoombyRoomId;
 const createRoom = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { hotel_id, room_number, room_type, price_per_night, max_occupancy, features, floor_number, bed_type, availability_status, view_type, smoking_allowed, description, rating, check_in_time, check_out_time, } = req.body;
+        const { hotel_id, room_number, room_type, price_per_night, max_occupancy, floor_number, bed_type, availability_status, amenities, description, rating, check_in_time, check_out_time, } = req.body;
         const hostid = req.userID;
         if (!hostid || !hotel_id) {
             return res.status(400).json({
@@ -160,14 +242,12 @@ const createRoom = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
             hotel_id,
             room_number,
             room_type,
+            amenities,
             price_per_night,
             max_occupancy,
-            features,
             floor_number,
             bed_type,
             availability_status,
-            view_type: view_type ? JSON.parse(view_type) : null,
-            smoking_allowed,
             description,
             rating,
             check_in_time,
@@ -197,7 +277,7 @@ exports.createRoom = createRoom;
 const updateRoom = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
     try {
-        const { room_id, room_number, room_type, price_per_night, max_occupancy, features, floor_number, bed_type, availability_status, view_type, smoking_allowed, description, check_in_time, check_out_time, } = req.body;
+        const { room_id, room_number, room_type, price_per_night, max_occupancy, floor_number, bed_type, amenities, availability_status, description, check_in_time, check_out_time, } = req.body;
         if (!room_id) {
             return res.status(400).json({
                 output: 0,
@@ -220,22 +300,20 @@ const updateRoom = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
                 jsonResponse: null
             });
         }
-        const parsedViewType = typeof view_type === "string" ? JSON.parse(view_type) : view_type;
+        const parsedViewType = typeof amenities === "string" ? JSON.parse(amenities) : amenities;
         const updatedRoom = {
             room_number: room_number || room.room_number,
             room_type: room_type || room.room_type,
             price_per_night: price_per_night || room.price_per_night,
             max_occupancy: max_occupancy || room.max_occupancy,
-            features: features || room.features,
             floor_number: floor_number || room.floor_number,
             bed_type: bed_type || room.bed_type,
             availability_status: availability_status || room.availability_status,
-            smoking_allowed: smoking_allowed || room.smoking_allowed,
             description: description || room.description,
             check_in_time: check_in_time || room.check_in_time,
             check_out_time: check_out_time || room.check_out_time,
             room_images: room.room_images,
-            view_type: Array.isArray(parsedViewType) ? parsedViewType : room.view_type,
+            amenities: Array.isArray(parsedViewType) ? parsedViewType : room.amenities,
         };
         const currentImages = room.room_images || [];
         const newImages = (_b = (_a = req === null || req === void 0 ? void 0 : req.files) === null || _a === void 0 ? void 0 : _a.map((file) => { var _a; return ((_a = file === null || file === void 0 ? void 0 : file.path) === null || _a === void 0 ? void 0 : _a.split("image/upload/")[1]) || null; })) !== null && _b !== void 0 ? _b : [];
