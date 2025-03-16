@@ -33,21 +33,11 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Booking = void 0;
+exports.Property = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
-const bookingSchema = new mongoose_1.Schema({
-    customer_id: { type: mongoose_1.Schema.Types.ObjectId, ref: "User", required: true, index: true },
-    room_id: { type: mongoose_1.Schema.Types.ObjectId, ref: "Room", required: true, index: true },
-    hotel_id: { type: mongoose_1.Schema.Types.ObjectId, ref: "Hotel", required: true, index: true },
-    check_in_date: { type: Date, required: true },
-    check_out_date: { type: Date, required: true },
-    total_guests: { type: Number, required: true, min: 1 },
-    total_price: { type: Number, required: true, min: 0 },
-    payment_status: { type: String, enum: ["pending", "paid", "failed"], default: "paid" },
-    booking_status: { type: String, enum: ["pending", "confirmed", "cancelled", "completed"], default: "confirmed" },
-    special_requests: { type: String, default: "" },
-    cancellation_reason: { type: String, default: "" },
-}, { timestamps: true });
-// ✅ Add compound unique index to prevent duplicate confirmed bookings
-bookingSchema.index({ room_id: 1, check_in_date: 1, check_out_date: 1, booking_status: 1 }, { unique: true, partialFilterExpression: { booking_status: "confirmed" } });
-exports.Booking = mongoose_1.default.model("Booking", bookingSchema);
+const PropertySchema = new mongoose_1.Schema({
+    name: { type: String, required: true },
+    location: { type: String, required: true },
+    // Define additional fields here
+});
+exports.Property = mongoose_1.default.model("Property", PropertySchema);

@@ -2,7 +2,9 @@ import { Request, Response } from "express";
 import { Room } from "../Model/room.model";
 import { Hotel } from "../Model/hotel.model";
 import { IReviewDocument, Room_Review } from "../Model/room_review.model";
-import { Document } from "mongoose";
+import mongoose, { Document } from "mongoose";
+import { Booking } from "../Model/booking.model";
+import { getHotelByCity } from "../Helper/getHotelByCity";
 
 export const getAllRooms = async (req: Request, res: Response) => {
     try {
@@ -19,6 +21,91 @@ export const getAllRooms = async (req: Request, res: Response) => {
             message: (error as Error).message,
             jsonResponse: null,
         });
+    }
+};
+
+export const searchRooms = async (req: Request, res: Response) => {
+    try {
+        let { city, check_in_date, check_out_date, adults, children, minPrice, maxPrice, amenities, rating, page } = req.query;
+
+        if (!city || !check_in_date || !check_out_date) {
+            return res.status(400).json({ message: "City, check-in, and check-out dates are required" });
+        }
+
+        const checkInDate = new Date(check_in_date as string);
+        const checkOutDate = new Date(check_out_date as string);
+        if (isNaN(checkInDate.getTime()) || isNaN(checkOutDate.getTime()) || checkInDate >= checkOutDate) {
+            return res.status(400).json({ message: "Invalid check-in or check-out date" });
+        }
+
+        const parsedPage = parseInt(page as string) || 1;
+        const parsedLimit = 3;
+
+        // Get booked room IDs in the given date range
+        const bookedRooms = await Booking.find({
+            check_in_date: { $lt: checkOutDate },
+            check_out_date: { $gt: checkInDate },
+            booking_status: { $in: ["pending", "confirmed"] }
+        }).distinct("room_id");
+
+        // Get properties in the specified city
+        const propertyIDs = await getHotelByCity(city as string);
+        if (!propertyIDs.length) {
+            return res.status(404).json({ message: "No hotels found in the selected city." });
+        }
+
+        // Construct query for available rooms
+        let query: any = {
+            hotel_id: { $in: propertyIDs },
+            _id: { $nin: bookedRooms },
+        };
+
+        // Additional filters
+        const totalGuests = (parseInt(adults as string) || 0) + (parseInt(children as string) || 0);
+        if (totalGuests > 0) query.max_occupancy = { $gte: totalGuests };
+        if (Number(minPrice) > 0 && Number(maxPrice) > 0) {
+            query.price_per_night = {
+                $gte: Number(minPrice),
+                $lte: Number(maxPrice)
+            };
+        }
+        if (amenities) query.amenities = { $all: (amenities as string[]) };
+        if (rating) query.rating = { $gte: parseFloat(rating as string) };
+
+        // Fetch available rooms with pagination
+        const availableRooms = await Room.find(query)
+            .select("room_images _id amenities room_type price_per_night max_occupancy bed_type rating check_in_time check_out_time")
+            .skip((parsedPage - 1) * parsedLimit)
+            .limit(parsedLimit);
+
+        const formattedRooms = availableRooms.map(room => ({
+            amenities: room.amenities,
+            image: room.room_images?.length ? room.room_images[0] : null,
+            _id: room._id,
+            room_type: room.room_type,
+            price_per_night: room.price_per_night,
+            max_occupancy: room.max_occupancy,
+            bed_type: room.bed_type,
+            rating: room.rating,
+            check_in_time: room.check_in_time,
+            check_out_time: room.check_out_time
+        }));
+
+        const totalRooms = await Room.countDocuments(query);
+
+        res.status(200).json({
+            output: availableRooms?.length,
+            message: 'ok',
+            jsonResponse: {
+                rooms: formattedRooms,
+                totalPages: Math.ceil(totalRooms / parsedLimit),
+                currentPage: parsedPage
+            }
+        });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Internal Server Error" });
     }
 };
 
@@ -105,7 +192,7 @@ export const getSpacificRoombyRoomId = async (req: Request, res: Response) => {
             });
         }
 
-        const room = await Room.findById({ _id: roomId }, { __v: 0, reviews: 0 });
+        const room = await Room.findById({ _id: roomId }, { __v: 0, reviews: 0 }).populate('hotel_id', " _id name");
         if (!room) {
             return res.status(404).json({
                 output: 0,
@@ -135,12 +222,10 @@ export const createRoom = async (req: Request, res: Response) => {
             room_type,
             price_per_night,
             max_occupancy,
-            features,
             floor_number,
             bed_type,
             availability_status,
-            view_type,
-            smoking_allowed,
+            amenities,
             description,
             rating,
             check_in_time,
@@ -181,14 +266,12 @@ export const createRoom = async (req: Request, res: Response) => {
             hotel_id,
             room_number,
             room_type,
+            amenities,
             price_per_night,
             max_occupancy,
-            features,
             floor_number,
             bed_type,
             availability_status,
-            view_type: view_type ? JSON.parse(view_type) : null,
-            smoking_allowed,
             description,
             rating,
             check_in_time,
@@ -225,12 +308,10 @@ export const updateRoom = async (req: Request, res: Response) => {
             room_type,
             price_per_night,
             max_occupancy,
-            features,
             floor_number,
             bed_type,
+            amenities,
             availability_status,
-            view_type,
-            smoking_allowed,
             description,
             check_in_time,
             check_out_time,
@@ -260,23 +341,21 @@ export const updateRoom = async (req: Request, res: Response) => {
             });
         }
 
-        const parsedViewType = typeof view_type === "string" ? JSON.parse(view_type) : view_type;
+        const parsedViewType = typeof amenities === "string" ? JSON.parse(amenities) : amenities;
 
         const updatedRoom = {
             room_number: room_number || room.room_number,
             room_type: room_type || room.room_type,
             price_per_night: price_per_night || room.price_per_night,
             max_occupancy: max_occupancy || room.max_occupancy,
-            features: features || room.features,
             floor_number: floor_number || room.floor_number,
             bed_type: bed_type || room.bed_type,
             availability_status: availability_status || room.availability_status,
-            smoking_allowed: smoking_allowed || room.smoking_allowed,
             description: description || room.description,
             check_in_time: check_in_time || room.check_in_time,
             check_out_time: check_out_time || room.check_out_time,
             room_images: room.room_images,
-            view_type: Array.isArray(parsedViewType) ? parsedViewType : room.view_type,
+            amenities: Array.isArray(parsedViewType) ? parsedViewType : room.amenities,
         };
 
         const currentImages = room.room_images || [];
