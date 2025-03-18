@@ -5,6 +5,8 @@ import { IReviewDocument, Room_Review } from "../Model/room_review.model";
 import mongoose, { Document } from "mongoose";
 import { Booking } from "../Model/booking.model";
 import { getHotelByCity } from "../Helper/getHotelByCity";
+import { ShortlistedRoom } from "../Model/shortlistedRoom.model";
+const jwt = require('jsonwebtoken');
 
 export const getAllRooms = async (req: Request, res: Response) => {
     try {
@@ -31,7 +33,20 @@ export const searchRooms = async (req: Request, res: Response) => {
         if (!city || !check_in_date || !check_out_date) {
             return res.status(400).json({ message: "City, check-in, and check-out dates are required" });
         }
+        let user_id = null;
 
+        // Manually check for the token in the headers
+        const authHeader = req.header("Authorization");
+        if (authHeader && authHeader.startsWith("Bearer ")) {
+            const token = req.cookies.token || req.headers.authorization?.split(' ')[1];
+            const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY) as any;
+            if (decoded) {
+                user_id = decoded.userID;
+            } else {
+                console.log('invalid token, proceeding without userid');
+
+            }
+        }
         const checkInDate = new Date(check_in_date as string);
         const checkOutDate = new Date(check_out_date as string);
         if (isNaN(checkInDate.getTime()) || isNaN(checkOutDate.getTime()) || checkInDate >= checkOutDate) {
@@ -51,7 +66,11 @@ export const searchRooms = async (req: Request, res: Response) => {
         // Get properties in the specified city
         const propertyIDs = await getHotelByCity(city as string);
         if (!propertyIDs.length) {
-            return res.status(404).json({ message: "No hotels found in the selected city." });
+            return res.status(200).json({
+                output: 0,
+                message: "No properties found in the specified city",
+                jsonResponse: null,
+            });
         }
 
         // Construct query for available rooms
@@ -74,19 +93,28 @@ export const searchRooms = async (req: Request, res: Response) => {
 
         // Fetch available rooms with pagination
         const availableRooms = await Room.find(query)
-            .select("room_images _id amenities room_type price_per_night max_occupancy bed_type rating check_in_time check_out_time")
+            .select("room_images _id hotel_id amenities room_type price_per_night max_occupancy bed_type rating check_in_time check_out_time")
             .skip((parsedPage - 1) * parsedLimit)
             .limit(parsedLimit);
+
+        let shortlistedRoomIds: string[] = [];
+        if (user_id) {
+            const shortlistedRooms = await ShortlistedRoom.find({ user_id }).select("room_id");
+            shortlistedRoomIds = shortlistedRooms.map(room => room.room_id.toString());
+        }
+        
 
         const formattedRooms = availableRooms.map(room => ({
             amenities: room.amenities,
             image: room.room_images?.length ? room.room_images[0] : null,
             _id: room._id,
+            hotel_id: room.hotel_id,
             room_type: room.room_type,
             price_per_night: room.price_per_night,
             max_occupancy: room.max_occupancy,
             bed_type: room.bed_type,
             rating: room.rating,
+            is_shortlisted: user_id ? shortlistedRoomIds.includes((room._id as mongoose.Types.ObjectId).toString()) : false,
             check_in_time: room.check_in_time,
             check_out_time: room.check_out_time
         }));
@@ -443,6 +471,82 @@ export const deleteRoom = async (req: Request, res: Response) => {
         });
     }
 };
+
+export const shortListRoom = async (req: Request, res: Response) => {
+    try {
+        const { room_id, hotel_id } = req.body;
+        const userID = req.userID;
+
+        if (!room_id || !hotel_id) {
+            return res.status(400).json({
+                output: 0,
+                message: "Room ID and Hotel ID are required",
+                jsonResponse: null,
+            });
+        }
+
+        // Check if room exists
+        const room = await Room.findById(room_id);
+        if (!room) {
+            return res.status(200).json({
+                output: 0,
+                message: "Room not found",
+                jsonResponse: null,
+            });
+        }
+
+        // Check if hotel exists
+        const hotel = await Hotel.findById(hotel_id);
+        if (!hotel) {
+            return res.status(200).json({
+                output: 0,
+                message: "Hotel not found",
+                jsonResponse: null,
+            });
+        }
+
+        // Check if the room is already shortlisted
+        const existingShortlist = await ShortlistedRoom.findOne({
+            user_id: userID,
+            room_id,
+            hotel_id
+        });
+
+        if (existingShortlist) {
+            // If already shortlisted, remove it (toggle off)
+            await ShortlistedRoom.deleteOne({ _id: existingShortlist._id });
+
+            return res.status(200).json({
+                output: 1,
+                message: "Room unshortlisted successfully",
+                jsonResponse: null,
+            });
+        }
+
+        // If not shortlisted, add it (toggle on)
+        const newShortlist = new ShortlistedRoom({
+            user_id: userID,
+            room_id,
+            hotel_id,
+        });
+
+        await newShortlist.save();
+
+        return res.status(201).json({
+            output: 1,
+            message: "Room shortlisted successfully",
+            jsonResponse: newShortlist,
+        });
+
+    } catch (error) {
+        return res.status(500).json({
+            output: 0,
+            message: (error as Error).message,
+            jsonResponse: null,
+        });
+    }
+};
+
 
 // Add Revew to Room by Room ID
 export const addRoomReview = async (req: Request, res: Response) => {
