@@ -1,7 +1,7 @@
 import { isAutheticated } from '../middlewares/isAuthenticated';
 import * as ex from "express";
 import { Request, Response } from "express";
-import { addRoomReview, createRoom, deleteRoom, getAllRooms, gethostAllRoom, getRoomsByHotel, getSpacificCompleteRoombyRoomId, getSpacificRoombyRoomId,  searchRooms, updateRoom } from '../Controller/room.controller';
+import { addRoomReview, createRoom, deleteRoom, getAllRooms, gethostAllRoom, getRoomsByHotel, getSpacificCompleteRoombyRoomId, getSpacificRoombyRoomId,  searchRooms, shortListRoom, updateRoom } from '../Controller/room.controller';
 import uploadMulti from '../Helper/uploadMulti';
 
 const router = ex.Router();
@@ -13,6 +13,7 @@ router.post("/get-specific-room-details", async (req: Request, res: Response) =>
 router.post("/create-room", isAutheticated, async (req: Request, res: Response) => { await createRoom(req, res) });
 router.put("/update-roomby-roomid", isAutheticated, uploadMulti, async (req: Request, res: Response) => { await updateRoom(req, res) });
 router.post("/delete-roomby-roomid", isAutheticated, async (req: Request, res: Response) => { await deleteRoom(req, res) });
+router.post("/update-room-shortlist", isAutheticated, async (req: Request, res: Response) => { await shortListRoom(req, res) });
 router.post("/get-rooms-by-hotel", async (req: Request, res: Response) => {
     await getRoomsByHotel(req, res);
 });
