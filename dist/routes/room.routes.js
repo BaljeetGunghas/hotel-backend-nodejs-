@@ -58,10 +58,12 @@ router.post("/get-specific-room-details", (req, res) => __awaiter(void 0, void 0
 router.post("/create-room", isAuthenticated_1.isAutheticated, (req, res) => __awaiter(void 0, void 0, void 0, function* () { yield (0, room_controller_1.createRoom)(req, res); }));
 router.put("/update-roomby-roomid", isAuthenticated_1.isAutheticated, uploadMulti_1.default, (req, res) => __awaiter(void 0, void 0, void 0, function* () { yield (0, room_controller_1.updateRoom)(req, res); }));
 router.post("/delete-roomby-roomid", isAuthenticated_1.isAutheticated, (req, res) => __awaiter(void 0, void 0, void 0, function* () { yield (0, room_controller_1.deleteRoom)(req, res); }));
+router.post("/update-room-shortlist", isAuthenticated_1.isAutheticated, (req, res) => __awaiter(void 0, void 0, void 0, function* () { yield (0, room_controller_1.shortListRoom)(req, res); }));
 router.post("/get-rooms-by-hotel", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     yield (0, room_controller_1.getRoomsByHotel)(req, res);
 }));
-router.post("/add-room-review", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.post("/add-room-review", isAuthenticated_1.isAutheticated, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     yield (0, room_controller_1.addRoomReview)(req, res);
 }));
+router.post("/likeDislikeReview", isAuthenticated_1.isAutheticated, (req, res) => __awaiter(void 0, void 0, void 0, function* () { yield (0, room_controller_1.likeDislikeReview)(req, res); }));
 exports.default = router;
