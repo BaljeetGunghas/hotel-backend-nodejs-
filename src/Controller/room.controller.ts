@@ -6,6 +6,7 @@ import mongoose, { Document } from "mongoose";
 import { Booking } from "../Model/booking.model";
 import { getHotelByCity } from "../Helper/getHotelByCity";
 import { ShortlistedRoom } from "../Model/shortlistedRoom.model";
+import { isAutheticatedByPass } from "../middlewares/isAuthenticatedByPass";
 const jwt = require('jsonwebtoken');
 
 export const getAllRooms = async (req: Request, res: Response) => {
@@ -33,20 +34,8 @@ export const searchRooms = async (req: Request, res: Response) => {
         if (!city || !check_in_date || !check_out_date) {
             return res.status(400).json({ message: "City, check-in, and check-out dates are required" });
         }
-        let user_id = null;
+        let user_id = await isAutheticatedByPass(req);
 
-        // Manually check for the token in the headers
-        const authHeader = req.header("Authorization");
-        if (authHeader && authHeader.startsWith("Bearer ")) {
-            const token = req.cookies.token || req.headers.authorization?.split(' ')[1];
-            const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY) as any;
-            if (decoded) {
-                user_id = decoded.userID;
-            } else {
-                console.log('invalid token, proceeding without userid');
-
-            }
-        }
         const checkInDate = new Date(check_in_date as string);
         const checkOutDate = new Date(check_out_date as string);
         if (isNaN(checkInDate.getTime()) || isNaN(checkOutDate.getTime()) || checkInDate >= checkOutDate) {
@@ -102,7 +91,7 @@ export const searchRooms = async (req: Request, res: Response) => {
             const shortlistedRooms = await ShortlistedRoom.find({ user_id }).select("room_id");
             shortlistedRoomIds = shortlistedRooms.map(room => room.room_id.toString());
         }
-        
+
 
         const formattedRooms = availableRooms.map(room => ({
             amenities: room.amenities,
@@ -170,6 +159,10 @@ export const gethostAllRoom = async (req: Request, res: Response) => {
 export const getSpacificCompleteRoombyRoomId = async (req: Request, res: Response) => {
     try {
         const { roomId } = req.body;
+        let userId = await isAutheticatedByPass(req);
+        if (userId) {
+            userId = new mongoose.Types.ObjectId(userId);
+        }
 
         if (!roomId) {
             return res.status(400).json({
@@ -187,17 +180,33 @@ export const getSpacificCompleteRoombyRoomId = async (req: Request, res: Respons
                 jsonResponse: null,
             });
         }
-        const hotel = await Hotel.findById({ _id: room.hotel_id }, { __v: 0 });
+        const hotel = await Hotel.findById({ _id: room.hotel_id }, { __v: 0, });
 
-        const roomReviews = await Room_Review.find({ room_id: roomId }, { __v: 0 });
+        const roomReviews = await Room_Review.find({ room_id: roomId }, { __v: 0 })
+            .sort({ createdAt: -1 }) // Get latest reviews
+            .limit(3)
+            .populate('user_id', 'name profile_picture'); // Include user id, name, and image
+
+        const formattedReviews = roomReviews.map(review => ({
+            ...review.toObject(),
+            isLiked: userId ? review.likes.includes(userId) : false,
+            isDisliked: userId ? review.dislikes.includes(userId) : false,
+        }));
+        const shortlistedRooms = await ShortlistedRoom.findOne({ user_id: userId, room_id: roomId }).select("room_id");
 
         return res.status(200).json({
             output: 1,
             message: "Room fetched successfully",
             jsonResponse: {
-                ...room.toObject(),
-                roomReviews: roomReviews.length > 0 ? roomReviews : null,
-                hotelDetails: hotel || null,
+                roomDetails: { ...room.toObject(), hotel_name: hotel?.name,is_shortlisted: shortlistedRooms ? true : false },
+                roomReviews: roomReviews.length > 0 ? formattedReviews : null,
+                hotelDetails: hotel ? {
+                    hotelId: hotel._id,
+                    hotel_name: hotel.name,
+                    hotelAddress: hotel.address,
+                    hotelRating: hotel.rating,
+                    hotelImage: hotel.hotel_image?.length ? hotel.hotel_image[0] : null,
+                } : null,
             },
         });
     } catch (error) {
@@ -551,7 +560,8 @@ export const shortListRoom = async (req: Request, res: Response) => {
 // Add Revew to Room by Room ID
 export const addRoomReview = async (req: Request, res: Response) => {
     try {
-        const { roomId, userId, hotelId, rating, comment } = req.body;
+        const { roomId, hotelId, rating, comment } = req.body;
+        const userId = req.userID;
         if (!roomId || !userId || !hotelId || !rating || !comment) {
             return res.status(400).json({
                 output: 0,
@@ -596,5 +606,59 @@ export const addRoomReview = async (req: Request, res: Response) => {
             message: (error as Error).message,
             jsonResponse: null,
         });
+    }
+};
+
+
+export const likeDislikeReview = async (req: Request, res: Response) => {
+    try {
+        const { reviewId, action } = req.body; // action: "like" or "dislike"
+        const userId = new mongoose.Types.ObjectId(req.userID); // Ensure ObjectId
+
+        const review = await Room_Review.findById(reviewId);
+        if (!review) {
+            return res.status(404).json({
+                output: 0,
+                message: "Review not found",
+                jsonResponse: null,
+            });
+        }
+
+        const hasLiked = review.likes.some(id => (id as unknown as mongoose.Types.ObjectId).equals(userId));
+        const hasDisliked = review.dislikes.some(id => (id as unknown as mongoose.Types.ObjectId).equals(userId));
+
+        let updateQuery: any = {};
+
+        if (action === "like") {
+            if (hasLiked) {
+                updateQuery = { $pull: { likes: userId, } }; // Remove like
+            } else {
+                updateQuery = {
+                    $addToSet: { likes: userId }, // Add like
+                    $pull: { dislikes: userId }, // Remove dislike if exists
+                };
+            }
+        } else if (action === "dislike") {
+            if (hasDisliked) {
+                updateQuery = { $pull: { dislikes: userId } }; // Remove dislike
+            } else {
+                updateQuery = {
+                    $addToSet: { dislikes: userId }, // Add dislike
+                    $pull: { likes: userId }, // Remove like if exists
+                };
+            }
+        }
+
+        const updatedReview = await Room_Review.findByIdAndUpdate(reviewId, updateQuery, { new: true });
+
+        return res.status(200).json({
+            output: 1,
+            message: "Review updated successfully",
+            jsonResponse: updatedReview,
+        });
+
+    } catch (error) {
+        console.error("Error in likeDislikeReview:", error);
+        return res.status(500).json({ message: "Server error", error });
     }
 };

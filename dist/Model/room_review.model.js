@@ -13,6 +13,8 @@ const reviewSchema = new mongoose_1.default.Schema({
     room_id: { type: mongoose_1.default.Schema.Types.ObjectId, ref: 'Room' },
     rating: { type: Number, min: 1, max: 5, required: true },
     comment: { type: String },
+    likes: [{ type: mongoose_1.default.Schema.Types.ObjectId, ref: 'User', default: [] }],
+    dislikes: [{ type: mongoose_1.default.Schema.Types.ObjectId, ref: 'User', default: [] }],
     // images: [{ type: String }], // Array of image URLs
     created_at: { type: Date, default: Date.now },
 });

@@ -8,14 +8,19 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.addRoomReview = exports.shortListRoom = exports.deleteRoom = exports.getRoomsByHotel = exports.updateRoom = exports.createRoom = exports.getSpacificRoombyRoomId = exports.getSpacificCompleteRoombyRoomId = exports.gethostAllRoom = exports.searchRooms = exports.getAllRooms = void 0;
+exports.likeDislikeReview = exports.addRoomReview = exports.shortListRoom = exports.deleteRoom = exports.getRoomsByHotel = exports.updateRoom = exports.createRoom = exports.getSpacificRoombyRoomId = exports.getSpacificCompleteRoombyRoomId = exports.gethostAllRoom = exports.searchRooms = exports.getAllRooms = void 0;
 const room_model_1 = require("../Model/room.model");
 const hotel_model_1 = require("../Model/hotel.model");
 const room_review_model_1 = require("../Model/room_review.model");
+const mongoose_1 = __importDefault(require("mongoose"));
 const booking_model_1 = require("../Model/booking.model");
 const getHotelByCity_1 = require("../Helper/getHotelByCity");
 const shortlistedRoom_model_1 = require("../Model/shortlistedRoom.model");
+const isAuthenticatedByPass_1 = require("../middlewares/isAuthenticatedByPass");
 const jwt = require('jsonwebtoken');
 const getAllRooms = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
@@ -36,25 +41,12 @@ const getAllRooms = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
 });
 exports.getAllRooms = getAllRooms;
 const searchRooms = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a;
     try {
         let { city, check_in_date, check_out_date, adults, children, minPrice, maxPrice, amenities, rating, page } = req.query;
         if (!city || !check_in_date || !check_out_date) {
             return res.status(400).json({ message: "City, check-in, and check-out dates are required" });
         }
-        let user_id = null;
-        // Manually check for the token in the headers
-        const authHeader = req.header("Authorization");
-        if (authHeader && authHeader.startsWith("Bearer ")) {
-            const token = req.cookies.token || ((_a = req.headers.authorization) === null || _a === void 0 ? void 0 : _a.split(' ')[1]);
-            const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
-            if (decoded) {
-                user_id = decoded.userID;
-            }
-            else {
-                console.log('invalid token, proceeding without userid');
-            }
-        }
+        let user_id = yield (0, isAuthenticatedByPass_1.isAutheticatedByPass)(req);
         const checkInDate = new Date(check_in_date);
         const checkOutDate = new Date(check_out_date);
         if (isNaN(checkInDate.getTime()) || isNaN(checkOutDate.getTime()) || checkInDate >= checkOutDate) {
@@ -168,8 +160,13 @@ const gethostAllRoom = (req, res) => __awaiter(void 0, void 0, void 0, function*
 });
 exports.gethostAllRoom = gethostAllRoom;
 const getSpacificCompleteRoombyRoomId = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
     try {
         const { roomId } = req.body;
+        let userId = yield (0, isAuthenticatedByPass_1.isAutheticatedByPass)(req);
+        if (userId) {
+            userId = new mongoose_1.default.Types.ObjectId(userId);
+        }
         if (!roomId) {
             return res.status(400).json({
                 output: 0,
@@ -185,12 +182,27 @@ const getSpacificCompleteRoombyRoomId = (req, res) => __awaiter(void 0, void 0, 
                 jsonResponse: null,
             });
         }
-        const hotel = yield hotel_model_1.Hotel.findById({ _id: room.hotel_id }, { __v: 0 });
-        const roomReviews = yield room_review_model_1.Room_Review.find({ room_id: roomId }, { __v: 0 });
+        const hotel = yield hotel_model_1.Hotel.findById({ _id: room.hotel_id }, { __v: 0, });
+        const roomReviews = yield room_review_model_1.Room_Review.find({ room_id: roomId }, { __v: 0 })
+            .sort({ createdAt: -1 }) // Get latest reviews
+            .limit(3)
+            .populate('user_id', 'name profile_picture'); // Include user id, name, and image
+        const formattedReviews = roomReviews.map(review => (Object.assign(Object.assign({}, review.toObject()), { isLiked: userId ? review.likes.includes(userId) : false, isDisliked: userId ? review.dislikes.includes(userId) : false })));
+        const shortlistedRooms = yield shortlistedRoom_model_1.ShortlistedRoom.findOne({ user_id: userId, room_id: roomId }).select("room_id");
         return res.status(200).json({
             output: 1,
             message: "Room fetched successfully",
-            jsonResponse: Object.assign(Object.assign({}, room.toObject()), { roomReviews: roomReviews.length > 0 ? roomReviews : null, hotelDetails: hotel || null }),
+            jsonResponse: {
+                roomDetails: Object.assign(Object.assign({}, room.toObject()), { hotel_name: hotel === null || hotel === void 0 ? void 0 : hotel.name, is_shortlisted: shortlistedRooms ? true : false }),
+                roomReviews: roomReviews.length > 0 ? formattedReviews : null,
+                hotelDetails: hotel ? {
+                    hotelId: hotel._id,
+                    hotel_name: hotel.name,
+                    hotelAddress: hotel.address,
+                    hotelRating: hotel.rating,
+                    hotelImage: ((_a = hotel.hotel_image) === null || _a === void 0 ? void 0 : _a.length) ? hotel.hotel_image[0] : null,
+                } : null,
+            },
         });
     }
     catch (error) {
@@ -495,7 +507,8 @@ exports.shortListRoom = shortListRoom;
 // Add Revew to Room by Room ID
 const addRoomReview = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { roomId, userId, hotelId, rating, comment } = req.body;
+        const { roomId, hotelId, rating, comment } = req.body;
+        const userId = req.userID;
         if (!roomId || !userId || !hotelId || !rating || !comment) {
             return res.status(400).json({
                 output: 0,
@@ -541,3 +554,53 @@ const addRoomReview = (req, res) => __awaiter(void 0, void 0, void 0, function* 
     }
 });
 exports.addRoomReview = addRoomReview;
+const likeDislikeReview = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { reviewId, action } = req.body; // action: "like" or "dislike"
+        const userId = new mongoose_1.default.Types.ObjectId(req.userID); // Ensure ObjectId
+        const review = yield room_review_model_1.Room_Review.findById(reviewId);
+        if (!review) {
+            return res.status(404).json({
+                output: 0,
+                message: "Review not found",
+                jsonResponse: null,
+            });
+        }
+        const hasLiked = review.likes.some(id => id.equals(userId));
+        const hasDisliked = review.dislikes.some(id => id.equals(userId));
+        let updateQuery = {};
+        if (action === "like") {
+            if (hasLiked) {
+                updateQuery = { $pull: { likes: userId, } }; // Remove like
+            }
+            else {
+                updateQuery = {
+                    $addToSet: { likes: userId }, // Add like
+                    $pull: { dislikes: userId }, // Remove dislike if exists
+                };
+            }
+        }
+        else if (action === "dislike") {
+            if (hasDisliked) {
+                updateQuery = { $pull: { dislikes: userId } }; // Remove dislike
+            }
+            else {
+                updateQuery = {
+                    $addToSet: { dislikes: userId }, // Add dislike
+                    $pull: { likes: userId }, // Remove like if exists
+                };
+            }
+        }
+        const updatedReview = yield room_review_model_1.Room_Review.findByIdAndUpdate(reviewId, updateQuery, { new: true });
+        return res.status(200).json({
+            output: 1,
+            message: "Review updated successfully",
+            jsonResponse: updatedReview,
+        });
+    }
+    catch (error) {
+        console.error("Error in likeDislikeReview:", error);
+        return res.status(500).json({ message: "Server error", error });
+    }
+});
+exports.likeDislikeReview = likeDislikeReview;

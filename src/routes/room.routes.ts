@@ -1,7 +1,7 @@
 import { isAutheticated } from '../middlewares/isAuthenticated';
 import * as ex from "express";
 import { Request, Response } from "express";
-import { addRoomReview, createRoom, deleteRoom, getAllRooms, gethostAllRoom, getRoomsByHotel, getSpacificCompleteRoombyRoomId, getSpacificRoombyRoomId,  searchRooms, shortListRoom, updateRoom } from '../Controller/room.controller';
+import { addRoomReview, createRoom, deleteRoom, getAllRooms, gethostAllRoom, getRoomsByHotel, getSpacificCompleteRoombyRoomId, getSpacificRoombyRoomId, likeDislikeReview, searchRooms, shortListRoom, updateRoom } from '../Controller/room.controller';
 import uploadMulti from '../Helper/uploadMulti';
 
 const router = ex.Router();
@@ -17,10 +17,10 @@ router.post("/update-room-shortlist", isAutheticated, async (req: Request, res: 
 router.post("/get-rooms-by-hotel", async (req: Request, res: Response) => {
     await getRoomsByHotel(req, res);
 });
-router.post("/add-room-review", async (req: Request, res: Response) => {
+router.post("/add-room-review", isAutheticated, async (req: Request, res: Response) => {
     await addRoomReview(req, res);
 });
-
+router.post("/likeDislikeReview", isAutheticated, async (req: Request, res: Response) => { await likeDislikeReview(req, res) });
 
 
 

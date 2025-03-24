@@ -6,6 +6,8 @@ export interface IReview {
     room_id: mongoose.Schema.Types.ObjectId;
     rating: number;
     comment: string;
+    likes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    dislikes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     // images: string[];
 };
 
@@ -19,6 +21,8 @@ const reviewSchema = new mongoose.Schema<IReviewDocument>({
     room_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Room' },
     rating: { type: Number, min: 1, max: 5, required: true },
     comment: { type: String },
+    likes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User', default: [] }],
+    dislikes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User', default: [] }],
     // images: [{ type: String }], // Array of image URLs
     created_at: { type: Date, default: Date.now },
 });
