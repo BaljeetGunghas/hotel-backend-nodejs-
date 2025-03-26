@@ -172,7 +172,7 @@ export const getSpacificCompleteRoombyRoomId = async (req: Request, res: Respons
             });
         }
 
-        const room = await Room.findById({ _id: roomId }, { __v: 0, reviews: 0 });
+        const room = await Room.findById({ _id: roomId }, { __v: 0, });
         if (!room) {
             return res.status(404).json({
                 output: 0,
@@ -183,7 +183,7 @@ export const getSpacificCompleteRoombyRoomId = async (req: Request, res: Respons
         const hotel = await Hotel.findById({ _id: room.hotel_id }, { __v: 0, });
 
         const roomReviews = await Room_Review.find({ room_id: roomId }, { __v: 0 })
-            .sort({ createdAt: -1 }) // Get latest reviews
+            .sort({ created_at: -1 }) // Get latest reviews
             .limit(3)
             .populate('user_id', 'name profile_picture'); // Include user id, name, and image
 
@@ -198,7 +198,7 @@ export const getSpacificCompleteRoombyRoomId = async (req: Request, res: Respons
             output: 1,
             message: "Room fetched successfully",
             jsonResponse: {
-                roomDetails: { ...room.toObject(), hotel_name: hotel?.name,is_shortlisted: shortlistedRooms ? true : false },
+                roomDetails: { ...room.toObject(), hotel_name: hotel?.name, is_shortlisted: shortlistedRooms ? true : false },
                 roomReviews: roomReviews.length > 0 ? formattedReviews : null,
                 hotelDetails: hotel ? {
                     hotelId: hotel._id,
@@ -594,11 +594,18 @@ export const addRoomReview = async (req: Request, res: Response) => {
                 jsonResponse: null,
             });
         }
+        const newReview = await Room_Review.findById({ _id: review._id }, { __v: 0, })
+            .populate("user_id", "name profile_picture")
+            .lean();
 
         return res.status(200).json({
             output: 1,
             message: "Review added successfully",
-            jsonResponse: review,
+            jsonResponse: {
+                ...newReview,
+                isLiked: false,
+                isDisliked: false,
+            },
         });
     } catch (error) {
         return res.status(500).json({
