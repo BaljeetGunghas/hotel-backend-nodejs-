@@ -174,7 +174,7 @@ const getSpacificCompleteRoombyRoomId = (req, res) => __awaiter(void 0, void 0, 
                 jsonResponse: null,
             });
         }
-        const room = yield room_model_1.Room.findById({ _id: roomId }, { __v: 0, reviews: 0 });
+        const room = yield room_model_1.Room.findById({ _id: roomId }, { __v: 0, });
         if (!room) {
             return res.status(404).json({
                 output: 0,
@@ -184,7 +184,7 @@ const getSpacificCompleteRoombyRoomId = (req, res) => __awaiter(void 0, void 0, 
         }
         const hotel = yield hotel_model_1.Hotel.findById({ _id: room.hotel_id }, { __v: 0, });
         const roomReviews = yield room_review_model_1.Room_Review.find({ room_id: roomId }, { __v: 0 })
-            .sort({ createdAt: -1 }) // Get latest reviews
+            .sort({ created_at: -1 }) // Get latest reviews
             .limit(3)
             .populate('user_id', 'name profile_picture'); // Include user id, name, and image
         const formattedReviews = roomReviews.map(review => (Object.assign(Object.assign({}, review.toObject()), { isLiked: userId ? review.likes.includes(userId) : false, isDisliked: userId ? review.dislikes.includes(userId) : false })));
@@ -539,10 +539,13 @@ const addRoomReview = (req, res) => __awaiter(void 0, void 0, void 0, function* 
                 jsonResponse: null,
             });
         }
+        const newReview = yield room_review_model_1.Room_Review.findById({ _id: review._id }, { __v: 0, })
+            .populate("user_id", "name profile_picture")
+            .lean();
         return res.status(200).json({
             output: 1,
             message: "Review added successfully",
-            jsonResponse: review,
+            jsonResponse: Object.assign(Object.assign({}, newReview), { isLiked: false, isDisliked: false }),
         });
     }
     catch (error) {
