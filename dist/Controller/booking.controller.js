@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.createBooking = void 0;
+exports.getBookingById = exports.createBooking = void 0;
 const booking_model_1 = require("../Model/booking.model");
 const room_model_1 = require("../Model/room.model");
 const mongoose_1 = __importDefault(require("mongoose"));
@@ -23,7 +23,7 @@ const createBooking = (req, res) => __awaiter(void 0, void 0, void 0, function* 
         const customer_id = req.userID;
         const { room_id, hotel_id, check_in_date, check_out_date, total_guests, total_price, special_requests } = req.body;
         if (!customer_id || !room_id || !hotel_id) {
-            return res.status(400).json({
+            return res.status(200).json({
                 output: 0,
                 message: "Customer ID, room ID, and hotel ID are required.",
                 jsonResponse: null
@@ -32,14 +32,14 @@ const createBooking = (req, res) => __awaiter(void 0, void 0, void 0, function* 
         const checkIn = new Date(check_in_date);
         const checkOut = new Date(check_out_date);
         if (isNaN(checkIn.getTime()) || isNaN(checkOut.getTime())) {
-            return res.status(400).json({
+            return res.status(200).json({
                 output: 0,
                 message: "Invalid date format. Use YYYY-MM-DD.",
                 jsonResponse: null
             });
         }
         if (checkIn > checkOut) {
-            return res.status(400).json({
+            return res.status(200).json({
                 output: 0,
                 message: "Check-in date cannot be after check-out date.",
                 jsonResponse: null
@@ -67,7 +67,7 @@ const createBooking = (req, res) => __awaiter(void 0, void 0, void 0, function* 
         if (existingBooking) {
             yield session.abortTransaction();
             session.endSession();
-            return res.status(400).json({
+            return res.status(200).json({
                 output: 0,
                 message: "Room is already booked for the selected dates.",
                 jsonResponse: null
@@ -116,3 +116,36 @@ const createBooking = (req, res) => __awaiter(void 0, void 0, void 0, function* 
     }
 });
 exports.createBooking = createBooking;
+const getBookingById = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { bookingId } = req.body;
+        if (!bookingId) {
+            return res.status(200).json({
+                output: 0,
+                message: "Booking ID is required",
+                jsonResponse: null
+            });
+        }
+        const booking = yield booking_model_1.Booking.findById(bookingId).select("-__v");
+        if (!booking) {
+            return res.status(404).json({
+                output: 0,
+                message: "Booking not found",
+                jsonResponse: null
+            });
+        }
+        res.status(200).json({
+            output: 1,
+            message: "Booking retrieved successfully",
+            jsonResponse: booking
+        });
+    }
+    catch (error) {
+        return res.status(500).json({
+            output: 0,
+            message: error.message,
+            jsonResponse: null
+        });
+    }
+});
+exports.getBookingById = getBookingById;

@@ -24,6 +24,7 @@ const room_routes_1 = __importDefault(require("./routes/room.routes"));
 const host_routes_1 = __importDefault(require("./routes/host.routes"));
 const booking_routes_1 = __importDefault(require("./routes/booking.routes"));
 const deleteImage_1 = __importDefault(require("./routes/deleteImage"));
+const payment_routes_1 = __importDefault(require("./routes/payment.routes"));
 const evn = "../.env";
 dotenv_1.default.config({ path: evn });
 const app = (0, express_1.default)();
@@ -65,6 +66,7 @@ app.use('/api/v1/hotel-room', room_routes_1.default); // hotel routes
 app.use('/api/v1/host', host_routes_1.default); // hotel routes
 app.use('/api/v1/booking', booking_routes_1.default);
 app.use('/api/v1/delete-image', deleteImage_1.default); //   delete image routes
+app.use('/api/v1/payment', payment_routes_1.default); // payment routes
 // start the server
 app.listen(PORT, () => __awaiter(void 0, void 0, void 0, function* () {
     console.log(`Server is running on http://localhost:${PORT}`);

@@ -10,6 +10,7 @@ import hotelRooms from './routes/room.routes';
 import host from './routes/host.routes';
 import booking from './routes/booking.routes'
 import delteImage from './routes/deleteImage';
+import Payment from './routes/payment.routes';
 const evn = "../.env";
 
 dotenv.config({ path: evn });
@@ -63,6 +64,7 @@ app.use('/api/v1/hotel-room', hotelRooms); // hotel routes
 app.use('/api/v1/host', host); // hotel routes
 app.use('/api/v1/booking', booking);
 app.use('/api/v1/delete-image', delteImage); //   delete image routes
+app.use('/api/v1/payment', Payment); // payment routes
 
 // start the server
 app.listen(PORT, async () => {

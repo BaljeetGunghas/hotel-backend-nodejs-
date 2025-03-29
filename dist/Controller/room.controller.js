@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.likeDislikeReview = exports.addRoomReview = exports.shortListRoom = exports.deleteRoom = exports.getRoomsByHotel = exports.updateRoom = exports.createRoom = exports.getSpacificRoombyRoomId = exports.getSpacificCompleteRoombyRoomId = exports.gethostAllRoom = exports.searchRooms = exports.getAllRooms = void 0;
+exports.likeDislikeReview = exports.addRoomReview = exports.shortListRoom = exports.deleteRoom = exports.getRoomsByHotel = exports.updateRoom = exports.createRoom = exports.getSpacificRoombyRoomId = exports.getSpacificCompleteRoombyRoomId = exports.gethostAllRoom = exports.getSingleSearchRoom = exports.searchRooms = exports.getAllRooms = void 0;
 const room_model_1 = require("../Model/room.model");
 const hotel_model_1 = require("../Model/hotel.model");
 const room_review_model_1 = require("../Model/room_review.model");
@@ -132,6 +132,57 @@ const searchRooms = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
     }
 });
 exports.searchRooms = searchRooms;
+const getSingleSearchRoom = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    try {
+        const { roomId } = req.body;
+        const userId = req.userID;
+        if (!roomId) {
+            return res.status(400).json({
+                output: 0,
+                message: "Room ID is required",
+                jsonResponse: null,
+            });
+        }
+        const room = yield room_model_1.Room.findById(roomId).select("room_images _id hotel_id amenities room_type price_per_night max_occupancy bed_type rating check_in_time check_out_time");
+        if (!room) {
+            return res.status(404).json({
+                output: 0,
+                message: "Room not found",
+                jsonResponse: null,
+            });
+        }
+        const isShortlistRoom = yield shortlistedRoom_model_1.ShortlistedRoom.findOne({ user_id: userId, room_id: roomId }).select("room_id");
+        const formattedRoom = {
+            amenities: room.amenities,
+            image: ((_a = room.room_images) === null || _a === void 0 ? void 0 : _a.length) ? room.room_images[0] : null,
+            _id: room._id,
+            hotel_id: room.hotel_id,
+            room_type: room.room_type,
+            price_per_night: room.price_per_night,
+            max_occupancy: room.max_occupancy,
+            bed_type: room.bed_type,
+            rating: room.rating,
+            is_shortlisted: isShortlistRoom ? true : false,
+            check_in_time: room.check_in_time,
+            check_out_time: room.check_out_time
+        };
+        return res.status(200).json({
+            output: 1,
+            message: "Room fetched successfully",
+            jsonResponse: formattedRoom,
+        });
+    }
+    catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            output: 0,
+            message: error.message,
+            jsonResponse: null,
+        });
+    }
+});
+exports.getSingleSearchRoom = getSingleSearchRoom;
 const gethostAllRoom = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const hostid = req.userID;

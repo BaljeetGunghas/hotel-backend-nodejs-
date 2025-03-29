@@ -43,11 +43,15 @@ const bookingSchema = new mongoose_1.Schema({
     check_out_date: { type: Date, required: true },
     total_guests: { type: Number, required: true, min: 1 },
     total_price: { type: Number, required: true, min: 0 },
-    payment_status: { type: String, enum: ["pending", "paid", "failed"], default: "paid" },
-    booking_status: { type: String, enum: ["pending", "confirmed", "cancelled", "completed"], default: "confirmed" },
+    // 🔹 Razorpay Payment Fields
+    razorpay_order_id: { type: String, unique: true, sparse: true },
+    razorpay_payment_id: { type: String },
+    razorpay_signature: { type: String },
+    payment_status: { type: String, enum: ["pending", "paid", "failed"], default: "pending" },
+    booking_status: { type: String, enum: ["pending", "confirmed", "cancelled", "completed"], default: "pending" },
     special_requests: { type: String, default: "" },
     cancellation_reason: { type: String, default: "" },
 }, { timestamps: true });
-// ✅ Add compound unique index to prevent duplicate confirmed bookings
+// ✅ Unique index to prevent duplicate confirmed bookings for the same room & date
 bookingSchema.index({ room_id: 1, check_in_date: 1, check_out_date: 1, booking_status: 1 }, { unique: true, partialFilterExpression: { booking_status: "confirmed" } });
 exports.Booking = mongoose_1.default.model("Booking", bookingSchema);

@@ -12,7 +12,7 @@ export const createBooking = async (req: Request, res: Response) => {
         const { room_id, hotel_id, check_in_date, check_out_date, total_guests, total_price, special_requests } = req.body;
 
         if (!customer_id || !room_id || !hotel_id) {
-            return res.status(400).json({
+            return res.status(200).json({
                 output: 0,
                 message: "Customer ID, room ID, and hotel ID are required.",
                 jsonResponse: null
@@ -23,7 +23,7 @@ export const createBooking = async (req: Request, res: Response) => {
         const checkOut = new Date(check_out_date);
 
         if (isNaN(checkIn.getTime()) || isNaN(checkOut.getTime())) {
-            return res.status(400).json({
+            return res.status(200).json({
                 output: 0,
                 message: "Invalid date format. Use YYYY-MM-DD.",
                 jsonResponse: null
@@ -31,7 +31,7 @@ export const createBooking = async (req: Request, res: Response) => {
         }
 
         if (checkIn > checkOut) {
-            return res.status(400).json({
+            return res.status(200).json({
                 output: 0,
                 message: "Check-in date cannot be after check-out date.",
                 jsonResponse: null
@@ -62,7 +62,7 @@ export const createBooking = async (req: Request, res: Response) => {
         if (existingBooking) {
             await session.abortTransaction();
             session.endSession();
-            return res.status(400).json({
+            return res.status(200).json({
                 output: 0,
                 message: "Room is already booked for the selected dates.",
                 jsonResponse: null
@@ -116,3 +116,38 @@ export const createBooking = async (req: Request, res: Response) => {
         });
     }
 };
+
+
+export const getBookingById = async (req: Request, res: Response) => {
+    try {
+        const { bookingId } = req.body;
+
+        if (!bookingId) {
+            return res.status(200).json({
+                output: 0,
+                message: "Booking ID is required",
+                jsonResponse: null
+            });
+        }
+
+        const booking = await Booking.findById(bookingId).select("-__v");
+        if (!booking) {
+            return res.status(404).json({
+                output: 0,
+                message: "Booking not found",
+                jsonResponse: null
+            });
+        }
+        res.status(200).json({
+            output: 1,
+            message: "Booking retrieved successfully",
+            jsonResponse: booking
+        });
+    } catch (error) {
+        return res.status(500).json({
+            output: 0,
+            message: (error as Error).message,
+            jsonResponse: null
+        });
+    }
+}

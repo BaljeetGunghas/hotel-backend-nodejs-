@@ -44,9 +44,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const isAuthenticated_1 = require("../middlewares/isAuthenticated");
 const ex = __importStar(require("express"));
-const booking_controller_1 = require("../Controller/booking.controller");
+const payment_1 = require("../Controller/payment");
 const router = ex.Router();
-router.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () { res.json({ message: 'get req' }); }));
-router.post('/create-booking', isAuthenticated_1.isAutheticated, (req, res) => __awaiter(void 0, void 0, void 0, function* () { yield (0, booking_controller_1.createBooking)(req, res); }));
-router.post('/get-bookingbyId', isAuthenticated_1.isAutheticated, (req, res) => __awaiter(void 0, void 0, void 0, function* () { yield (0, booking_controller_1.getBookingById)(req, res); }));
+router.post('/create-payment', isAuthenticated_1.isAutheticated, (req, res) => __awaiter(void 0, void 0, void 0, function* () { yield (0, payment_1.createPayment)(req, res); }));
+router.post('/verify-payment', isAuthenticated_1.isAutheticated, (req, res) => __awaiter(void 0, void 0, void 0, function* () { yield (0, payment_1.verifyPayment)(req, res); }));
 exports.default = router;
