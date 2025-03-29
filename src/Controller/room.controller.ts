@@ -126,6 +126,57 @@ export const searchRooms = async (req: Request, res: Response) => {
     }
 };
 
+export const getSingleSearchRoom = async (req: Request, res: Response) => {
+    try {
+        const { roomId } = req.body;
+        const userId = req.userID;
+
+        if (!roomId) {
+            return res.status(400).json({
+                output: 0,
+                message: "Room ID is required",
+                jsonResponse: null,
+            });
+        }
+        const room = await Room.findById(roomId).select("room_images _id hotel_id amenities room_type price_per_night max_occupancy bed_type rating check_in_time check_out_time");
+        if (!room) {
+            return res.status(404).json({
+                output: 0,
+                message: "Room not found",
+                jsonResponse: null,
+            });
+        }
+        const isShortlistRoom = await ShortlistedRoom.findOne({ user_id: userId, room_id: roomId }).select("room_id");
+
+        const formattedRoom = {
+            amenities: room.amenities,
+            image: room.room_images?.length ? room.room_images[0] : null,
+            _id: room._id,
+            hotel_id: room.hotel_id,
+            room_type: room.room_type,
+            price_per_night: room.price_per_night,
+            max_occupancy: room.max_occupancy,
+            bed_type: room.bed_type,
+            rating: room.rating,
+            is_shortlisted: isShortlistRoom ? true : false,
+            check_in_time: room.check_in_time,
+            check_out_time: room.check_out_time
+        };
+        return res.status(200).json({
+            output: 1,
+            message: "Room fetched successfully",
+            jsonResponse: formattedRoom,
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            output: 0,
+            message: (error as Error).message,
+            jsonResponse: null,
+        });
+    }
+};
+
 export const gethostAllRoom = async (req: Request, res: Response) => {
     try {
         const hostid = req.userID;
