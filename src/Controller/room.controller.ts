@@ -392,6 +392,7 @@ export const updateRoom = async (req: Request, res: Response) => {
     try {
         const {
             room_id,
+            hotel_id,
             room_number,
             room_type,
             price_per_night,
@@ -432,6 +433,7 @@ export const updateRoom = async (req: Request, res: Response) => {
         const parsedViewType = typeof amenities === "string" ? JSON.parse(amenities) : amenities;
 
         const updatedRoom = {
+            hotel_id : hotel_id || room.hotel_id,
             room_number: room_number || room.room_number,
             room_type: room_type || room.room_type,
             price_per_night: price_per_night || room.price_per_night,

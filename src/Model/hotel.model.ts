@@ -31,7 +31,7 @@ const hotelSchema = new mongoose.Schema<IHotelDocument>({
     owner_name: { type: String },
     description: { type: String, required: true },
     address: { type: String, required: true },
-    city: { type: String, required:true },
+    city: { type: String, required: true },
     postal_code: { type: String, required: true },
     rating: { type: Number, min: 0, max: 5, default: 0 },
     rooms: { type: Number, default: 0 },

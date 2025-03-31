@@ -113,7 +113,7 @@ export const getSpecificHotelDetailsByHotelId = async (req: Request, res: Respon
 
 export const createHotel = async (req: Request, res: Response) => {
     try {
-        const { name, owner_name, description, address, city, state, country, postal_code, policies, cancellation_policy, contact_number, email, } = req.body;
+        const { name, owner_name, description, address, city, postal_code, policies, cancellation_policy, contact_number, email,status } = req.body;
         const hostid = req.userID;
         const hotelexist = await Hotel.findOne({ contact_number: contact_number });
 
@@ -141,13 +141,12 @@ export const createHotel = async (req: Request, res: Response) => {
             description,
             address,
             city,
-            state,
-            country,
             postal_code,
             policies,
             cancellation_policy,
             contact_number,
             email,
+            status
         };
 
         const filteredHotelData = Object.fromEntries(
