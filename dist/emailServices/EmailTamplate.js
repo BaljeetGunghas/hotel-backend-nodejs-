@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.WelcomeEmailTamplate = exports.VerifyEmailTamplate = void 0;
+exports.ContactUsEmailTamplate = exports.WelcomeEmailTamplate = exports.VerifyEmailTamplate = void 0;
 const VerifyEmailTamplate = (name, code) => {
     return `<!DOCTYPE html>
 <html lang="en">
@@ -173,3 +173,65 @@ const WelcomeEmailTamplate = (name) => {
 `;
 };
 exports.WelcomeEmailTamplate = WelcomeEmailTamplate;
+const ContactUsEmailTamplate = (name, email, subject, message) => {
+    return `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Contact Request</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            background-color: #4CAF50;
+            color: white;
+            text-align: center;
+            padding: 10px 0;
+            font-size: 20px;
+            font-weight: bold;
+            border-radius: 8px 8px 0 0;
+        }
+        .content {
+            padding: 20px;
+            font-size: 16px;
+            color: #333;
+        }
+        .footer {
+            text-align: center;
+            font-size: 14px;
+            color: #777;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">New Contact Request</div>
+        <div class="content">
+            <p><strong>Name:</strong> {${name}}</p>
+            <p><strong>Email:</strong> {${email}}</p>
+            <p><strong>Subject:</strong> {${subject}}</p>
+            <p><strong>Message:</strong></p>
+            <p>{${message}}</p>
+        </div>
+        <div class="footer">
+            <p>This message was sent from your contact form.</p>
+        </div>
+    </div>
+</body>
+</html>
+
+  `;
+};
+exports.ContactUsEmailTamplate = ContactUsEmailTamplate;

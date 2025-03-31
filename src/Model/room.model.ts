@@ -38,7 +38,7 @@ const roomSchema = new mongoose.Schema<IRoomDocument>({
     amenities: { type: [String], default: null },
     rating: { type: Number, min: 0, max: 5, default: 0 },
     reviews: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Room_Review' }],
-    check_in_time: { type: String, default: "14:00" },
+    check_in_time: { type: String, default: "10:00" },
     check_out_time: { type: String, default: "12:00" },
     room_images: { type: [String], maxlength: 5, default: null },
 }, { timestamps: true });

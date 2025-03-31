@@ -367,7 +367,7 @@ exports.createRoom = createRoom;
 const updateRoom = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
     try {
-        const { room_id, room_number, room_type, price_per_night, max_occupancy, floor_number, bed_type, amenities, availability_status, description, check_in_time, check_out_time, } = req.body;
+        const { room_id, hotel_id, room_number, room_type, price_per_night, max_occupancy, floor_number, bed_type, amenities, availability_status, description, check_in_time, check_out_time, } = req.body;
         if (!room_id) {
             return res.status(400).json({
                 output: 0,
@@ -392,6 +392,7 @@ const updateRoom = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
         }
         const parsedViewType = typeof amenities === "string" ? JSON.parse(amenities) : amenities;
         const updatedRoom = {
+            hotel_id: hotel_id || room.hotel_id,
             room_number: room_number || room.room_number,
             room_type: room_type || room.room_type,
             price_per_night: price_per_night || room.price_per_night,

@@ -108,7 +108,7 @@ const getSpecificHotelDetailsByHotelId = (req, res) => __awaiter(void 0, void 0,
 exports.getSpecificHotelDetailsByHotelId = getSpecificHotelDetailsByHotelId;
 const createHotel = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { name, owner_name, description, address, city, state, country, postal_code, policies, cancellation_policy, contact_number, email, } = req.body;
+        const { name, owner_name, description, address, city, postal_code, policies, cancellation_policy, contact_number, email, status } = req.body;
         const hostid = req.userID;
         const hotelexist = yield hotel_model_1.Hotel.findOne({ contact_number: contact_number });
         if (!hostid) {
@@ -133,13 +133,12 @@ const createHotel = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
             description,
             address,
             city,
-            state,
-            country,
             postal_code,
             policies,
             cancellation_policy,
             contact_number,
             email,
+            status
         };
         const filteredHotelData = Object.fromEntries(Object.entries(hotelData).filter(([_, value]) => value !== undefined && value !== null));
         const hotel = new hotel_model_1.Hotel(filteredHotelData);
